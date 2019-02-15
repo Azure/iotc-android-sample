@@ -371,6 +371,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onError(Exception exception) {
+                if(exception==null) {
+                return;
+                }
                 /* Failed to acquireToken */
                 Log.e(TAG, "Authentication failed: " + exception.toString());
                 if (exception instanceof AuthenticationException) {
