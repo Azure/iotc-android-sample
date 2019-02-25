@@ -1,7 +1,26 @@
 <resources>
     <string name="app_name">Azure IoT Central</string>
     <string name="welcome_text">Welcome, </string>
-    <string name="login">Login to IoTCentral </string>
+    <string name="login">Login</string>
+    <string name="sign_out">Logout </string>
     <string name="loading">Getting data from IoTCentral...</string>
-    <string name="sign_out">Sign Out</string>
+    <string name="scope">ScopeId</string>
+    <string name="masterkey">Master Key</string>
+    <string name="deviceid">Device Id</string>
+    <string name="models">Models</string>
+    <string name="next">Next</string>
+    <string name="connect">Connect</string>
+    <string name="create">Create</string>
+    <string name="directory">Directory</string>
+    <string name="subscription">Subscription</string>
+    <string name="region">Region</string>
+    <string name="rg">Resource Group</string>
+    <string name="addrg">Create new</string>
+    <string name="appName">Application name</string>
+    <string name="URL">URL</string>
+    <string name="freeApp">Trial</string>
+    <string name="paidApp">Pay-As-You-Go</string>
+    <string name="domain">.azureiotcentral.com</string>
+    <string name="linktofree">Please create a trial app through https://apps.azureiotcentral.com</string>
+    <string name="loadingData">Loading...</string>
 </resources>

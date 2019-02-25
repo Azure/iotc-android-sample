@@ -17,6 +17,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        exclude 'thirdpartynotice.txt'
+        exclude 'maven.properties'
+        exclude 'META-INF/DEPENDENCIES'
+    }
 }
 
 dependencies {
@@ -28,7 +33,11 @@ dependencies {
     implementation('com.microsoft.aad:adal:1.14.+') {
         exclude group: 'com.android.support'
     }
-    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    implementation 'com.microsoft.azure:azure:1.19.0'
+    implementation 'com.github.lucadruda:iotc-java-device-client:1.0.1'
     testImplementation 'junit:junit:4.12'
+    annotationProcessor 'com.microsoft.azure:azure-annotations:1.8.0'
 }

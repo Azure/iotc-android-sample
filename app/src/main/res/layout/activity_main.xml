@@ -1,65 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="#1a1d1e"
     android:orientation="vertical"
+    android:visibility="visible"
     tools:context="com.azuresamples.azureadsampleapp.MainActivity">
-
-    <GridView
-        android:id="@+id/gridApps"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:columnWidth="200dp"
-        android:gravity="center"
-        android:numColumns="auto_fit"
-        android:stretchMode="none"
-        android:visibility="gone">
-
-    </GridView>
 
     <TextView
         android:id="@+id/welcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="48dp"
         android:text="@string/welcome_text"
-        android:textColor="#3f3f3f"
-        android:textSize="50px"
-        android:visibility="invisible" />
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="350dp"
+        android:layout_width="97dp"
+        android:layout_height="49dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="48dp"
         android:background="#00a1f1"
         android:text="@string/login"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
-        />
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <Button
+        android:id="@+id/logout"
+        android:layout_width="99dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
+        android:background="#00a1f1"
+        android:text="@string/sign_out"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.861"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <GridView
+        android:id="@+id/gridApps"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center|bottom"
-        android:orientation="vertical">
+        android:layout_height="534dp"
+        android:layout_marginTop="96dp"
+        android:columnWidth="150dp"
+        android:gravity="center"
+        android:horizontalSpacing="10dp"
+        android:numColumns="auto_fit"
+        android:stretchMode="spacingWidthUniform"
+        android:verticalSpacing="24dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <Button
-            android:id="@+id/clearCache"
-            android:layout_width="match_parent"
+    </GridView>
+
+    <FrameLayout
+        android:id="@+id/newAppContainer"
+        android:layout_width="57dp"
+        android:layout_height="59dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.92"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.913">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/newapp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:background="#00a1f1"
-            android:text="@string/sign_out"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:visibility="invisible" />
-    </LinearLayout>
+            android:layout_gravity="end|bottom"
+            android:src="@drawable/ic_add_box_black_24dp"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:pressedTranslationZ="12dp" />
+    </FrameLayout>
 
-</LinearLayout>
+
+</android.support.constraint.ConstraintLayout>

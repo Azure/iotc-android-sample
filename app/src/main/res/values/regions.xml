@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="ARMRegions">
+        <item>EastUS</item>
+        <item>WestUS</item>
+        <item>WestEurope</item>
+        <item>NorthEurope</item>
+    </string-array>
+</resources>
