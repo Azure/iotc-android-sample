@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Application[] apps;
     private ArrayList<Button> appButtons;
-    private GridView gridView;
+    private ExpandableGrid gridView;
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
 
@@ -67,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        gridView = (GridView) findViewById(R.id.gridApps);
+        gridView = (ExpandableGrid) findViewById(R.id.gridApps);
+        gridView.setNumColumns(3);
         newAppBtn = (FloatingActionButton) findViewById(R.id.newapp);
 
         newAppBtn.setOnClickListener(new View.OnClickListener() {
@@ -144,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 userName);
 
         gridView.setAdapter(new AppAdapter(this, apps));
+        gridView.setExpanded(true);
         gridView.setVisibility(View.VISIBLE);
         findViewById(R.id.newAppContainer).setVisibility(View.VISIBLE);
 
