@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:orientation="vertical"
-    tools:context="com.azuresamples.azureadsampleapp.MainActivity">
+    tools:context="com.github.lucadruda.iotcentral.MainActivity">
 
     <TextView
         android:text="@string/welcome_text"

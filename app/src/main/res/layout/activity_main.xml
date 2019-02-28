@@ -8,7 +8,7 @@
     android:background="#1a1d1e"
     android:orientation="vertical"
     android:visibility="visible"
-    tools:context="com.azuresamples.azureadsampleapp.MainActivity">
+    tools:context="com.github.lucadruda.iotcentral.MainActivity">
 
     <TextView
         android:id="@+id/welcome"
@@ -67,7 +67,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0">
 
-        <com.azuresamples.azureadsampleapp.ExpandableGrid
+        <com.github.lucadruda.iotcentral.ExpandableGrid
             android:id="@+id/gridApps"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"

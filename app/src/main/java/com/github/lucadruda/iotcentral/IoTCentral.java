@@ -1,4 +1,4 @@
-package com.azuresamples.azureadsampleapp;
+package com.github.lucadruda.iotcentral;
 
 import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.DataClient;

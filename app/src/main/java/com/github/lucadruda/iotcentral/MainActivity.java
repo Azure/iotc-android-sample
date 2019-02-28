@@ -1,4 +1,4 @@
-package com.azuresamples.azureadsampleapp;
+package com.github.lucadruda.iotcentral;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;

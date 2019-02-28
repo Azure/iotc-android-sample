@@ -1,4 +1,4 @@
-package com.azuresamples.azureadsampleapp;
+package com.github.lucadruda.iotcentral;
 
 public class Constants {
     public static final String CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";

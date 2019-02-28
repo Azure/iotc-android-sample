@@ -1,4 +1,4 @@
-<com.azuresamples.azureadsampleapp.SquareFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.lucadruda.iotcentral.SquareFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/adapterRoot"
     android:layout_width="fill_parent"
@@ -14,4 +14,4 @@
         android:focusable="false"
         android:scaleType="fitCenter"
         android:textColor="#ffffff"/>
-</com.azuresamples.azureadsampleapp.SquareFrameLayout>
+</com.github.lucadruda.iotcentral.SquareFrameLayout>
