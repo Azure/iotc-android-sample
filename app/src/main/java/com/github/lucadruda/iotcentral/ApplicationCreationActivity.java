@@ -32,6 +32,7 @@ import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
 import com.github.lucadruda.iotcentral.service.User;
+import com.github.lucadruda.iotcentral.service.templates.DevKitTemplate;
 import com.github.lucadruda.iotcentral.service.types.ResourceGroup;
 import com.github.lucadruda.iotcentral.service.types.Subscription;
 import com.github.lucadruda.iotcentral.service.types.Tenant;
@@ -176,7 +177,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                         resourceGroup = String.valueOf(resourceGroupsSpinner.getSelectedItem());
                     }
                     ARMClient iotc = IoTCentral.getArmClient();
-                    Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), "iotc-default@1.0.0");
+                    Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), new DevKitTemplate());
                     startLoader(getActivity());
                     iotc.setResourceGroup(resourceGroup);
                     iotc.createApplication(application);

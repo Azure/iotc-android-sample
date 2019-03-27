@@ -3,19 +3,19 @@ package com.github.lucadruda.iotcentral;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.github.lucadruda.iotcentral.service.Application;
-import com.github.lucadruda.iotcentral.service.DeviceCredentials;
 import com.github.lucadruda.iotcentral.service.DeviceTemplate;
 
 import java.io.IOException;
 
-public class ApplicationActivity extends Activity {
+public class ApplicationActivity extends AppCompatActivity {
 
     private Application application;
     /*    private TextView scopeId;
@@ -25,12 +25,15 @@ public class ApplicationActivity extends Activity {
     private DeviceTemplate[] models;
     private Button nextBtn;
 
+    public static final String DEVICE_TEMPLATE_ID = "templateId";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_activity);
-        application = (Application) getIntent().getSerializableExtra("app");
-
+        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
+        getSupportActionBar().setTitle(application.getName());
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 /*        scopeId = (TextView) findViewById(R.id.scopeId);
         masterKey = (TextView) findViewById(R.id.masterKey);
         deviceId = (TextView) findViewById(R.id.deviceId);*/
@@ -40,13 +43,22 @@ public class ApplicationActivity extends Activity {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(android.view.View v) {
                 Intent appIntent = new Intent(getActivity(), DeviceActivity.class);
-                appIntent.putExtra("app", application);
-                appIntent.putExtra("templateId", String.valueOf(modelsSpinner.getSelectedItem()));
+                appIntent.putExtra(MainActivity.APPLICATION, application);
+                appIntent.putExtra(DEVICE_TEMPLATE_ID, String.valueOf(modelsSpinner.getSelectedItem()));
                 startActivity(appIntent);
             }
         });
         credThread.start();
 
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+
+        }
+        return true;
     }
 
     Thread credThread = new Thread(new Runnable() {

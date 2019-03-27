@@ -1,19 +1,17 @@
 package com.github.lucadruda.iotcentral;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.InputType;
+import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
 
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -29,7 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class DeviceActivity extends Activity {
+public class DeviceActivity extends AppCompatActivity {
 
     private Application application;
     private String templateId;
@@ -46,15 +44,16 @@ public class DeviceActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.device_activity);
-        application = (Application) getIntent().getSerializableExtra("app");
-        templateId = (String) getIntent().getSerializableExtra("templateId");
-
+        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
+        getSupportActionBar().setTitle(application.getName());
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         deviceGroup = (RadioGroup) findViewById(R.id.devicesGroup);
         newBtn = (Button) findViewById(R.id.addDevice);
         newBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                /*AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setTitle("Add new device");
                 final EditText input = new EditText(getActivity());
                 input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -73,7 +72,11 @@ public class DeviceActivity extends Activity {
                     }
                 });
 
-                builder.show();
+                builder.show();*/
+                Intent appIntent = new Intent(getActivity(), DeviceScanActivity.class);
+                appIntent.putExtra(MainActivity.APPLICATION, application);
+                appIntent.putExtra(ApplicationActivity.DEVICE_TEMPLATE_ID, templateId);
+                startActivity(appIntent);
             }
         });
         connectBtn = (Button) findViewById(R.id.connectBtn);
@@ -104,6 +107,16 @@ public class DeviceActivity extends Activity {
         });
         devThread.start();
 
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+
+        }
+        return true;
     }
 
     Thread devThread = new Thread(new Runnable() {

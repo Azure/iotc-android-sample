@@ -7,5 +7,6 @@ public class Constants {
     public static final String GRAPH_TOKEN_AUDIENCE = "https://graph.windows.net/";
     public static final String IOTC_DATA_URL = "https://api.azureiotcentral.com/v1-beta";
     public static final String AUTHORITY_BASE = "https://login.microsoftonline.com/";
+    public static final String IOTC_TEMPLATE_ID = "iotc-devkit-sample:1.0.0";
 
 }

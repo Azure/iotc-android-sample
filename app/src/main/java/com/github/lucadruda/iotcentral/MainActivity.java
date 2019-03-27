@@ -8,16 +8,13 @@ import android.os.Bundle;
 
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.lucadruda.iotcentral.adapters.AppAdapter;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
 import com.microsoft.aad.adal.AuthenticationContext;
@@ -44,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private ExpandableGrid gridView;
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
+
+    public static final String APPLICATION = "app";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
                         .findViewById(R.id.grid_item_label);
                 textView.setText(apps[position].getName());
                 Intent appIntent = new Intent(getActivity(), ApplicationActivity.class);
-                appIntent.putExtra("app", apps[position]);
+                appIntent.putExtra(APPLICATION, apps[position]);
                 startActivity(appIntent);
                 Toast.makeText(getApplicationContext(),
                         textView.getText(), Toast.LENGTH_SHORT).show();
