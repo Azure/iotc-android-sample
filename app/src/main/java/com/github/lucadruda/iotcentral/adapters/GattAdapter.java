@@ -18,6 +18,7 @@ import com.github.lucadruda.iotcentral.R;
 import com.github.lucadruda.iotcentral.bluetooth.SampleGattAttributes;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GattAdapter extends BaseExpandableListAdapter {
@@ -67,13 +68,14 @@ public class GattAdapter extends BaseExpandableListAdapter {
 
         // Set the item name
         TextView featureName = (TextView) convertView.findViewById(R.id.featureName);
-        featureName.setText(SampleGattAttributes.lookup(characteristic.getUuid().toString(), unknownServiceString));
+        String name = SampleGattAttributes.lookup(characteristic.getUuid().toString(), unknownServiceString);
+        featureName.setText(name);
 
         TextView uuid = (TextView) convertView.findViewById(R.id.featureUUID);
         uuid.setText(characteristic.getUuid().toString());
 
         Spinner measureSpinner = (Spinner) convertView.findViewById(R.id.telemetrySpinner);
-        MeasureAdapter adapter = new MeasureAdapter(context, android.R.id.text1, measures);
+        MeasureAdapter adapter = new MeasureAdapter(context, android.R.id.text1, new ArrayList<Measure>(measures), name);
         measureSpinner.setAdapter(adapter);
         measureSpinner.setOnItemSelectedListener(adapter.getOnItemSelectedListener());
         return convertView;

@@ -12,7 +12,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.github.lucadruda.iotcentral.bluetooth.BLEService;
+import com.github.lucadruda.iotcentral.R;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
 import java.util.HashMap;
@@ -28,16 +28,17 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     private BroadcastReceiver listener;
     private LocalBroadcastManager localBroadcastManager;
     private String currentKey;
+    private String featureName;
 
     private final String MEASURE_DATASTORE_CHANGE = "MEASURE_DATASTORE_CHANGE";
     private final String MEASURE_DATASTORE_KEYTOREMOVE = "MEASURE_DATASTORE_KEYTOREMOVE";
     private final String MEASURE_DATASTORE_KEYTOADD = "MEASURE_DATASTORE_KEYTOADD";
     public static final String DEFAULT_TEXT_KEY = "$default";
 
-    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures) {
+    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String name) {
         super(context, textViewResourceId, measures);
-        localBroadcastManager = LocalBroadcastManager.getInstance(context);
         this.context = context;
+        this.featureName = name;
         this.availableMeasures = new HashMap<>();
         for (Measure measure : measures) {
             this.availableMeasures.put(measure.getFieldName(), measure);
@@ -63,7 +64,7 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                 }
             }
         };
-        context.registerReceiver(listener, getReceiverFilter());
+        LocalBroadcastManager.getInstance(context).registerReceiver(listener, getReceiverFilter());
     }
 
 
@@ -79,19 +80,22 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        notifyDataSetChanged();
+        //notifyDataSetChanged();
         return getCustomView(position, convertView, parent);
     }
 
 
     public View getCustomView(int position, View convertView, ViewGroup parent) {
-
+        TextView label;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View row = inflater.inflate(android.R.layout.simple_spinner_item, parent, false);
-        TextView label = (TextView) row.findViewById(android.R.id.text1);
+        if (convertView == null) {
+            convertView = inflater.inflate(android.R.layout.simple_spinner_item, parent, false);
+        }
+
+        label = (TextView) convertView.findViewById(android.R.id.text1);
         label.setText(this.getItem(position).toString());
 
-        return row;
+        return convertView;
     }
 
     public AdapterView.OnItemSelectedListener getOnItemSelectedListener() {
@@ -112,7 +116,7 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                     intent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
                 }
                 currentKey = key;
-                localBroadcastManager.sendBroadcast(intent);
+                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
             }
 
             @Override
@@ -123,10 +127,8 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     }
 
     private IntentFilter getReceiverFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(MEASURE_DATASTORE_CHANGE);
+        final IntentFilter intentFilter = new IntentFilter(MEASURE_DATASTORE_CHANGE);
         return intentFilter;
     }
-
 
 }
