@@ -22,10 +22,12 @@ public class IoTCentral {
 
 
     public static DataClient getDataClient() {
+        //TODO: check if null and handle token refresh
         return dataClient;
     }
 
     public static ARMClient getArmClient() {
+        //TODO: check if null and handle token refresh
         return armClient;
     }
 

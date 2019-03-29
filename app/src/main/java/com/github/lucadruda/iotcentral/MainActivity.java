@@ -42,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
 
-    public static final String APPLICATION = "app";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                         .findViewById(R.id.grid_item_label);
                 textView.setText(apps[position].getName());
                 Intent appIntent = new Intent(getActivity(), ApplicationActivity.class);
-                appIntent.putExtra(APPLICATION, apps[position]);
+                appIntent.putExtra(Constants.APPLICATION, apps[position]);
                 startActivity(appIntent);
                 Toast.makeText(getApplicationContext(),
                         textView.getText(), Toast.LENGTH_SHORT).show();

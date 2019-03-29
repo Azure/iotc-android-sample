@@ -47,8 +47,8 @@ public class DeviceScanActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.provision_activity);
-        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
-        templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
         getSupportActionBar().setTitle(application.getName() + " - " + getString(R.string.scanBleTitle));
         scannedView = findViewById(R.id.scannedView);
         scannedView.setHasFixedSize(true);
@@ -202,10 +202,10 @@ public class DeviceScanActivity extends AppCompatActivity {
                 return;
             }
             final Intent intent = new Intent(getActivity(), BLEActivity.class);
-            intent.putExtra(BLEActivity.EXTRAS_DEVICE_NAME, device.getName());
-            intent.putExtra(BLEActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-            intent.putExtra(MainActivity.APPLICATION, application);
-            intent.putExtra(ApplicationActivity.DEVICE_TEMPLATE_ID, templateId);
+            intent.putExtra(Constants.DEVICE_NAME, device.getName());
+            intent.putExtra(Constants.DEVICE_ADDRESS, device.getAddress());
+            intent.putExtra(Constants.APPLICATION, application);
+            intent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
 
             if (mScanning) {
                 bleScanner.stopScan(bleScanCallback);

@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,8 +26,7 @@ import com.github.lucadruda.iotcentral.services.DeviceService;
 
 public class BLEActivity extends AppCompatActivity {
 
-    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
-    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+
     private Application application;
     private String templateId;
     private String deviceName;
@@ -55,49 +55,33 @@ public class BLEActivity extends AppCompatActivity {
         }
     };
 
-    private final ServiceConnection deviceServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            // service connected. let's connect the BLE service
-            bleService = ((BLEService.LocalBinder) service).getService();
-            if (!bleService.initialize()) {
-                Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_LONG).show();
-                finish();
-            }
-            bleService.connect(deviceAddress);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            bleService = null;
-        }
-    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ble_service);
-        deviceName = getIntent().getStringExtra(EXTRAS_DEVICE_NAME);
-        deviceAddress = getIntent().getStringExtra(EXTRAS_DEVICE_ADDRESS);
+        deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
+        deviceAddress = getIntent().getStringExtra(Constants.DEVICE_ADDRESS);
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectBtn = findViewById(R.id.connectBLE);
         connectBtn.setOnClickListener(onConnectButtonClick());
-        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
-        templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
         serviceList = findViewById(R.id.gatt_services_list);
         storage = new MappingStorage(this, deviceName);
-        getSupportActionBar().setTitle((String) getIntent().getSerializableExtra(EXTRAS_DEVICE_NAME));
+        getSupportActionBar().setTitle(deviceName);
 
         // binding to background BLE service and GATT manager
         Intent bleServiceIntent = new Intent(this, BLEService.class);
         bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
-
+        LocalBroadcastManager.getInstance(this).registerReceiver(gattUpdateReceiver, getReceiverFilter());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(gattUpdateReceiver, getReceiverFilter());
+
         if (bleService != null) {
             final boolean result = bleService.connect(deviceAddress);
         }
@@ -140,6 +124,8 @@ public class BLEActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
+                findViewById(R.id.connectionProgress).setVisibility(View.GONE);
+                serviceList.setVisibility(View.VISIBLE);
                 serviceList.setAdapter(new GattAdapter(getActivity(), bleService.getSupportedGattServices(), IoTCentral.getMeasures(templateId)));
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
 // data available

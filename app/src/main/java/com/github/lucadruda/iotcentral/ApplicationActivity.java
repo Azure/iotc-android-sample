@@ -25,13 +25,12 @@ public class ApplicationActivity extends AppCompatActivity {
     private DeviceTemplate[] models;
     private Button nextBtn;
 
-    public static final String DEVICE_TEMPLATE_ID = "templateId";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_activity);
-        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
         getSupportActionBar().setTitle(application.getName());
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 /*        scopeId = (TextView) findViewById(R.id.scopeId);
@@ -43,8 +42,8 @@ public class ApplicationActivity extends AppCompatActivity {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(android.view.View v) {
                 Intent appIntent = new Intent(getActivity(), DeviceActivity.class);
-                appIntent.putExtra(MainActivity.APPLICATION, application);
-                appIntent.putExtra(DEVICE_TEMPLATE_ID, String.valueOf(modelsSpinner.getSelectedItem()));
+                appIntent.putExtra(Constants.APPLICATION, application);
+                appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, String.valueOf(modelsSpinner.getSelectedItem()));
                 startActivity(appIntent);
             }
         });

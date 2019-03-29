@@ -44,8 +44,8 @@ public class DeviceActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.device_activity);
-        application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
-        templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
         getSupportActionBar().setTitle(application.getName());
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         deviceGroup = (RadioGroup) findViewById(R.id.devicesGroup);
@@ -74,8 +74,8 @@ public class DeviceActivity extends AppCompatActivity {
 
                 builder.show();*/
                 Intent appIntent = new Intent(getActivity(), DeviceScanActivity.class);
-                appIntent.putExtra(MainActivity.APPLICATION, application);
-                appIntent.putExtra(ApplicationActivity.DEVICE_TEMPLATE_ID, templateId);
+                appIntent.putExtra(Constants.APPLICATION, application);
+                appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
                 startActivity(appIntent);
             }
         });
