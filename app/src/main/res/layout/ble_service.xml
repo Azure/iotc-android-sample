@@ -40,14 +40,16 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/label_state"
+            android:text="@string/deviceid"
             android:textSize="18sp" />
 
-        <TextView
-            android:id="@+id/connection_state"
+        <EditText
+            android:id="@+id/deviceId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/disconnected"
+            android:autofillHints="@string/deviceid_hint"
+            android:hint="@string/deviceid_hint"
+            android:inputType="text"
             android:textSize="18sp" />
 
     </LinearLayout>
@@ -56,5 +58,16 @@
     <ExpandableListView
         android:id="@+id/gatt_services_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="476dp">
+
+    </ExpandableListView>
+
+
+    <Button
+        android:id="@+id/connectBLE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:enabled="false"
+        android:text="@string/connect" />
 </LinearLayout>

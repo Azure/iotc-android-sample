@@ -4,15 +4,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.github.lucadruda.iotcentral.R;
+import com.github.lucadruda.iotcentral.IServiceCallback;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
 import java.util.HashMap;
@@ -33,6 +33,7 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     private final String MEASURE_DATASTORE_CHANGE = "MEASURE_DATASTORE_CHANGE";
     private final String MEASURE_DATASTORE_KEYTOREMOVE = "MEASURE_DATASTORE_KEYTOREMOVE";
     private final String MEASURE_DATASTORE_KEYTOADD = "MEASURE_DATASTORE_KEYTOADD";
+    private final String MEASURE_TELEMETRY_ASSIGNED = "TELEMETRY_ASSIGNED";
     public static final String DEFAULT_TEXT_KEY = "$default";
 
     public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String name) {
@@ -45,7 +46,6 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
         }
         currentMeasures = measures;
         this.isFirstTime = true;
-        //setDefaultText(defaultText);
         currentKey = DEFAULT_TEXT_KEY;
         listener = new BroadcastReceiver() {
             @Override
@@ -54,6 +54,10 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                     String keyToremove = intent.getStringExtra(MEASURE_DATASTORE_KEYTOREMOVE);
                     String keyToadd = intent.getStringExtra(MEASURE_DATASTORE_KEYTOADD);
                     if (keyToremove != null) {
+                        if (keyToremove.equals(currentKey)) {
+                            // not removing current spinner
+                            return;
+                        }
                         Measure measureToRemove = availableMeasures.get(keyToremove);
                         remove(measureToRemove);
                     }
@@ -64,39 +68,35 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                 }
             }
         };
-        LocalBroadcastManager.getInstance(context).registerReceiver(listener, getReceiverFilter());
+
+        localBroadcastManager = LocalBroadcastManager.getInstance(context);
+        localBroadcastManager.registerReceiver(listener, getReceiverFilter());
     }
 
 
     @Override
     public View getDropDownView(int position, View convertView, ViewGroup parent) {
-       /* if (isFirstTime) {
-            getItem()
-            currentMeasures.set(0, firstElement);
-            isFirstTime = false;
-        }*/
-        return getCustomView(position, convertView, parent);
+
+        View view;
+        view = View.inflate(context, android.R.layout.simple_spinner_dropdown_item, null);
+        final TextView textView = (TextView) view.findViewById(android.R.id.text1);
+        textView.setText(this.getItem(position).toString());
+
+        textView.setTextColor(Color.BLACK);
+        textView.setBackgroundColor(Color.WHITE);
+
+
+        return view;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        //notifyDataSetChanged();
-        return getCustomView(position, convertView, parent);
+        View view = View.inflate(context, android.R.layout.simple_spinner_item, null);
+        TextView textView = (TextView) view.findViewById(android.R.id.text1);
+        textView.setText(this.getItem(position).toString());
+        return textView;
     }
 
-
-    public View getCustomView(int position, View convertView, ViewGroup parent) {
-        TextView label;
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (convertView == null) {
-            convertView = inflater.inflate(android.R.layout.simple_spinner_item, parent, false);
-        }
-
-        label = (TextView) convertView.findViewById(android.R.id.text1);
-        label.setText(this.getItem(position).toString());
-
-        return convertView;
-    }
 
     public AdapterView.OnItemSelectedListener getOnItemSelectedListener() {
         return new AdapterView.OnItemSelectedListener() {
@@ -116,7 +116,8 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                     intent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
                 }
                 currentKey = key;
-                LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+                localBroadcastManager.sendBroadcast(intent);
+                localBroadcastManager.sendBroadcast(new Intent(MEASURE_TELEMETRY_ASSIGNED));
             }
 
             @Override
@@ -130,5 +131,6 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
         final IntentFilter intentFilter = new IntentFilter(MEASURE_DATASTORE_CHANGE);
         return intentFilter;
     }
+
 
 }

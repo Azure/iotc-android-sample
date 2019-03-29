@@ -41,5 +41,7 @@
     <string name="unknown_service">Unknown service</string>
     <string name="select_telemetry">Select a telemetry property...</string>
 
+    <string name="deviceid_hint">DeviceId can only have lowercase characters</string>
+
 
 </resources>

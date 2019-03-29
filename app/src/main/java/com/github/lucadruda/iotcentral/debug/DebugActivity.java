@@ -17,10 +17,11 @@ import java.util.List;
 public class DebugActivity extends AppCompatActivity {
 
     @Override
-    public void onCreate(Bundle savedInstanceState, PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.acitvity_debug);
         List<Measure> measures = IoTCentral.getMeasures("130772c7-97dd-4a76-bbdb-9209888293f6");
+        measures.add(0, new Measure(MeasureAdapter.DEFAULT_TEXT_KEY, "Select telemetry...", Measure.MeasureType.TELEMETRY));
         for (int i = 1; i <= 6; i++) {
             Spinner spinner = findViewById(getResources().getIdentifier("spinner" + i, "id", getPackageName()));
             MeasureAdapter adapter = new MeasureAdapter(this, android.R.id.text1, new ArrayList<Measure>(measures), "spinner" + i);

@@ -13,6 +13,7 @@ import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,6 +34,8 @@ public class BLEActivity extends AppCompatActivity {
     private String deviceAddress;
     private ExpandableListView serviceList;
     private BLEService bleService;
+
+    private Button connectBtn;
 
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -60,6 +63,7 @@ public class BLEActivity extends AppCompatActivity {
         deviceName = getIntent().getStringExtra(EXTRAS_DEVICE_NAME);
         deviceAddress = getIntent().getStringExtra(EXTRAS_DEVICE_ADDRESS);
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
+        connectBtn = findViewById(R.id.connectBLE);
         application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
         templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
         serviceList = findViewById(R.id.gatt_services_list);
@@ -69,7 +73,6 @@ public class BLEActivity extends AppCompatActivity {
         Intent bleServiceIntent = new Intent(this, BLEService.class);
         bindService(bleServiceIntent, serviceConnection, BIND_AUTO_CREATE);
 
-        //bleService.connect(deviceAddress);
     }
 
     @Override
@@ -118,10 +121,12 @@ public class BLEActivity extends AppCompatActivity {
                 invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
-
                 serviceList.setAdapter(new GattAdapter(getActivity(), bleService.getSupportedGattServices(), IoTCentral.getMeasures(templateId)));
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
 // data available
+            } else if (BLEService.TELEMETRY_ASSIGNED.equals(action)) {
+                connectBtn.setEnabled(true);
+
             }
         }
     };
@@ -132,6 +137,7 @@ public class BLEActivity extends AppCompatActivity {
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
+        intentFilter.addAction(BLEService.TELEMETRY_ASSIGNED);
         return intentFilter;
     }
 }

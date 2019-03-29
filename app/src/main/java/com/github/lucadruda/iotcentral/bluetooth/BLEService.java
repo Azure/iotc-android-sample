@@ -42,6 +42,9 @@ public class BLEService extends Service {
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
+    public final static String TELEMETRY_ASSIGNED =
+            "TELEMETRY_ASSIGNED";
+
     private final IBinder mBinder = new LocalBinder();
 
     public class LocalBinder extends Binder {
