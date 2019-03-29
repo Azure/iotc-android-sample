@@ -12,7 +12,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.github.lucadruda.iotcentral.IServiceCallback;
+import com.github.lucadruda.iotcentral.services.BLEService;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
 import java.util.HashMap;
@@ -28,18 +28,18 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     private BroadcastReceiver listener;
     private LocalBroadcastManager localBroadcastManager;
     private String currentKey;
-    private String featureName;
+    private String featureUUID;
 
     private final String MEASURE_DATASTORE_CHANGE = "MEASURE_DATASTORE_CHANGE";
     private final String MEASURE_DATASTORE_KEYTOREMOVE = "MEASURE_DATASTORE_KEYTOREMOVE";
     private final String MEASURE_DATASTORE_KEYTOADD = "MEASURE_DATASTORE_KEYTOADD";
-    private final String MEASURE_TELEMETRY_ASSIGNED = "TELEMETRY_ASSIGNED";
+
     public static final String DEFAULT_TEXT_KEY = "$default";
 
-    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String name) {
+    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String featureUUID) {
         super(context, textViewResourceId, measures);
         this.context = context;
-        this.featureName = name;
+        this.featureUUID = featureUUID;
         this.availableMeasures = new HashMap<>();
         for (Measure measure : measures) {
             this.availableMeasures.put(measure.getFieldName(), measure);
@@ -104,20 +104,23 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Measure item = (Measure) parent.getItemAtPosition(position);
                 String key = item.getFieldName();
-                Intent intent = new Intent(MEASURE_DATASTORE_CHANGE);
+                Intent dataChangeIntent = new Intent(MEASURE_DATASTORE_CHANGE);
+                Intent assignmentIntent = new Intent(BLEService.TELEMETRY_ASSIGNED);
+                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT, featureUUID);
+                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_IOTC, key);
                 if (currentKey.equals(key) && currentKey.equals(DEFAULT_TEXT_KEY)) {
                     return;
                 } else if (currentKey.equals(DEFAULT_TEXT_KEY) && !key.equals(DEFAULT_TEXT_KEY)) {
-                    intent.putExtra(MEASURE_DATASTORE_KEYTOREMOVE, key);
+                    dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOREMOVE, key);
                 } else if (!currentKey.equals(DEFAULT_TEXT_KEY) && key.equals(DEFAULT_TEXT_KEY)) {
-                    intent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
+                    dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
                 } else {
-                    intent.putExtra(MEASURE_DATASTORE_KEYTOREMOVE, key);
-                    intent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
+                    dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOREMOVE, key);
+                    dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
                 }
                 currentKey = key;
-                localBroadcastManager.sendBroadcast(intent);
-                localBroadcastManager.sendBroadcast(new Intent(MEASURE_TELEMETRY_ASSIGNED));
+                localBroadcastManager.sendBroadcast(dataChangeIntent);
+                localBroadcastManager.sendBroadcast(assignmentIntent);
             }
 
             @Override

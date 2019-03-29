@@ -1,4 +1,4 @@
-package com.github.lucadruda.iotcentral.bluetooth;
+package com.github.lucadruda.iotcentral.services;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -14,10 +13,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-import android.util.Log;
 
 import java.util.List;
-import java.util.UUID;
 
 public class BLEService extends Service {
 
@@ -44,6 +41,9 @@ public class BLEService extends Service {
 
     public final static String TELEMETRY_ASSIGNED =
             "TELEMETRY_ASSIGNED";
+
+    public final static String MEASURE_MAPPING_GATT = "MEASURE_MAPPING_GATT";
+    public final static String MEASURE_MAPPING_IOTC = "MEASURE_MAPPING_IOTC";
 
     private final IBinder mBinder = new LocalBinder();
 

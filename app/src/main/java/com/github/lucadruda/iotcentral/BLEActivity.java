@@ -1,7 +1,6 @@
 package com.github.lucadruda.iotcentral;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -11,18 +10,18 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.adapters.GattAdapter;
-import com.github.lucadruda.iotcentral.bluetooth.BLEService;
+import com.github.lucadruda.iotcentral.services.BLEService;
+import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.service.Application;
-
-import java.util.ArrayList;
+import com.github.lucadruda.iotcentral.services.DeviceService;
 
 public class BLEActivity extends AppCompatActivity {
 
@@ -34,11 +33,29 @@ public class BLEActivity extends AppCompatActivity {
     private String deviceAddress;
     private ExpandableListView serviceList;
     private BLEService bleService;
-
+    private MappingStorage storage;
     private Button connectBtn;
 
 
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
+    private final ServiceConnection bleServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            // service connected. let's connect the BLE service
+            bleService = ((BLEService.LocalBinder) service).getService();
+            if (!bleService.initialize()) {
+                Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_LONG).show();
+                finish();
+            }
+            bleService.connect(deviceAddress);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            bleService = null;
+        }
+    };
+
+    private final ServiceConnection deviceServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             // service connected. let's connect the BLE service
@@ -64,14 +81,16 @@ public class BLEActivity extends AppCompatActivity {
         deviceAddress = getIntent().getStringExtra(EXTRAS_DEVICE_ADDRESS);
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectBtn = findViewById(R.id.connectBLE);
+        connectBtn.setOnClickListener(onConnectButtonClick());
         application = (Application) getIntent().getSerializableExtra(MainActivity.APPLICATION);
         templateId = (String) getIntent().getSerializableExtra(ApplicationActivity.DEVICE_TEMPLATE_ID);
         serviceList = findViewById(R.id.gatt_services_list);
+        storage = new MappingStorage(this, deviceName);
         getSupportActionBar().setTitle((String) getIntent().getSerializableExtra(EXTRAS_DEVICE_NAME));
 
         // binding to background BLE service and GATT manager
         Intent bleServiceIntent = new Intent(this, BLEService.class);
-        bindService(bleServiceIntent, serviceConnection, BIND_AUTO_CREATE);
+        bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
 
     }
 
@@ -93,7 +112,7 @@ public class BLEActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(serviceConnection);
+        unbindService(bleServiceConnection);
         bleService = null;
     }
 
@@ -125,8 +144,20 @@ public class BLEActivity extends AppCompatActivity {
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
 // data available
             } else if (BLEService.TELEMETRY_ASSIGNED.equals(action)) {
-                connectBtn.setEnabled(true);
 
+                String gattUUID = intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT);
+                String telemetryID = intent.getStringExtra(BLEService.MEASURE_MAPPING_IOTC);
+                if (gattUUID != null) {
+                    if (telemetryID != null) {
+                        storage.add(gattUUID, telemetryID);
+                        connectBtn.setEnabled(true);
+                    } else {
+                        storage.remove(gattUUID);
+                    }
+                }
+                if (storage.size() == 0) {
+                    connectBtn.setEnabled(false);
+                }
             }
         }
     };
@@ -139,5 +170,17 @@ public class BLEActivity extends AppCompatActivity {
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
         intentFilter.addAction(BLEService.TELEMETRY_ASSIGNED);
         return intentFilter;
+    }
+
+    private View.OnClickListener onConnectButtonClick() {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+// commit preferences
+                storage.commit();
+                Intent deviceServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
+                bindService(deviceServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
+            }
+        };
     }
 }

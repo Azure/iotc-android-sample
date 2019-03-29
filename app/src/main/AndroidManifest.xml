@@ -32,7 +32,7 @@
         <activity android:name=".BLEActivity" />
 
         <service
-            android:name=".bluetooth.BLEService"
+            android:name=".services.BLEService"
             android:enabled="true" />
     </application>
 
