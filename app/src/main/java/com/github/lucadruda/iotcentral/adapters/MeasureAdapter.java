@@ -10,8 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckedTextView;
 import android.widget.TextView;
 
+import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.services.BLEService;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
@@ -24,11 +26,12 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     final HashMap<String, Measure> availableMeasures;
     List<Measure> currentMeasures;
     //Measure firstElement;
-    boolean isFirstTime;
+    private boolean firstTime;
     private BroadcastReceiver listener;
     private LocalBroadcastManager localBroadcastManager;
     private String currentKey;
-    private String featureUUID;
+    private int currentPosition;
+    private final String gattPair;
 
     private final String MEASURE_DATASTORE_CHANGE = "MEASURE_DATASTORE_CHANGE";
     private final String MEASURE_DATASTORE_KEYTOREMOVE = "MEASURE_DATASTORE_KEYTOREMOVE";
@@ -36,16 +39,16 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
 
     public static final String DEFAULT_TEXT_KEY = "$default";
 
-    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String featureUUID) {
+    public MeasureAdapter(Context context, int textViewResourceId, List<Measure> measures, String gattPair) {
         super(context, textViewResourceId, measures);
         this.context = context;
-        this.featureUUID = featureUUID;
+        this.firstTime = true;
+        this.gattPair = gattPair;
         this.availableMeasures = new HashMap<>();
         for (Measure measure : measures) {
             this.availableMeasures.put(measure.getFieldName(), measure);
         }
         currentMeasures = measures;
-        this.isFirstTime = true;
         currentKey = DEFAULT_TEXT_KEY;
         listener = new BroadcastReceiver() {
             @Override
@@ -77,24 +80,31 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
     @Override
     public View getDropDownView(int position, View convertView, ViewGroup parent) {
 
-        View view;
-        view = View.inflate(context, android.R.layout.simple_spinner_dropdown_item, null);
-        final TextView textView = (TextView) view.findViewById(android.R.id.text1);
-        textView.setText(this.getItem(position).toString());
+        if (convertView == null) {
+            convertView = View.inflate(context, android.R.layout.simple_spinner_dropdown_item, null);
+        }
+        ((CheckedTextView) convertView).setText(this.getItem(position).toString());
 
-        textView.setTextColor(Color.BLACK);
-        textView.setBackgroundColor(Color.WHITE);
+        ((CheckedTextView) convertView).setTextColor(Color.BLACK);
+        ((CheckedTextView) convertView).setBackgroundColor(Color.WHITE);
 
-
-        return view;
+        return convertView;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view = View.inflate(context, android.R.layout.simple_spinner_item, null);
-        TextView textView = (TextView) view.findViewById(android.R.id.text1);
-        textView.setText(this.getItem(position).toString());
-        return textView;
+        if (convertView == null) {
+            convertView = View.inflate(context, android.R.layout.simple_spinner_item, null);
+        }
+        if (position == 0 || currentPosition != position) {
+            // view come back from scroll or dataset has been changed so position has different item
+            ((TextView) convertView).setText(availableMeasures.get(currentKey).toString());
+        } else {
+            ((TextView) convertView).setText(getItem(position).toString());
+            // set right position now. if dataset changes we restore this value
+            currentPosition = position;
+        }
+        return convertView;
     }
 
 
@@ -102,13 +112,16 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
         return new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    return;
+                }
                 Measure item = (Measure) parent.getItemAtPosition(position);
                 String key = item.getFieldName();
                 Intent dataChangeIntent = new Intent(MEASURE_DATASTORE_CHANGE);
                 Intent assignmentIntent = new Intent(BLEService.TELEMETRY_ASSIGNED);
-                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT, featureUUID);
+                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT, gattPair);
                 assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_IOTC, key);
-                if (currentKey.equals(key) && currentKey.equals(DEFAULT_TEXT_KEY)) {
+                if (currentKey.equals(key)) {
                     return;
                 } else if (currentKey.equals(DEFAULT_TEXT_KEY) && !key.equals(DEFAULT_TEXT_KEY)) {
                     dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOREMOVE, key);
@@ -119,6 +132,8 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                     dataChangeIntent.putExtra(MEASURE_DATASTORE_KEYTOADD, currentKey);
                 }
                 currentKey = key;
+                // force view to refresh since this is called after getview and position might be different
+                ((TextView) view).setText(availableMeasures.get(currentKey).toString());
                 localBroadcastManager.sendBroadcast(dataChangeIntent);
                 localBroadcastManager.sendBroadcast(assignmentIntent);
             }
@@ -128,6 +143,12 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
 
             }
         };
+    }
+
+
+    public int getPosition(String fieldName) {
+        Measure measure = availableMeasures.get(fieldName);
+        return this.getPosition(measure);
     }
 
     private IntentFilter getReceiverFilter() {

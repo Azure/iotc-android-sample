@@ -14,7 +14,10 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.github.lucadruda.iotcentral.helpers.GattPair;
+
 import java.util.List;
+import java.util.UUID;
 
 public class BLEService extends Service {
 
@@ -117,10 +120,11 @@ public class BLEService extends Service {
         // For all other profiles, writes the data formatted in HEX.
         final byte[] data = characteristic.getValue();
         if (data != null && data.length > 0) {
-            final StringBuilder stringBuilder = new StringBuilder(data.length);
+           /* final StringBuilder stringBuilder = new StringBuilder(data.length);
             for (byte byteChar : data)
-                stringBuilder.append(String.format("%02X ", byteChar));
-            intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+                stringBuilder.append(String.format("%02X ", byteChar));*/
+            intent.putExtra(MEASURE_MAPPING_GATT, new GattPair(characteristic).getKey());
+            intent.putExtra(EXTRA_DATA, data);
         }
         sendBroadcast(intent);
     }
@@ -191,12 +195,31 @@ public class BLEService extends Service {
         blGatt.readCharacteristic(characteristic);
     }
 
+    public void readCharacteristic(String gattPair) {
+        if (blAdapter == null || blGatt == null) {
+            return;
+        }
+        GattPair pair = new GattPair(gattPair);
+        BluetoothGattCharacteristic chars = blGatt.getService(pair.getServiceUUID()).getCharacteristic(pair.getCharacteristicUUID());
+        readCharacteristic(chars);
+    }
+
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
         if (blAdapter == null || blGatt == null) {
             return;
         }
         blGatt.setCharacteristicNotification(characteristic, enabled);
+    }
+
+    public void setCharacteristicNotification(String gattPair,
+                                              boolean enabled) {
+        if (blAdapter == null || blGatt == null) {
+            return;
+        }
+        GattPair pair = new GattPair(gattPair);
+        BluetoothGattCharacteristic chars = blGatt.getService(pair.getServiceUUID()).getCharacteristic(pair.getCharacteristicUUID());
+        setCharacteristicNotification(chars, enabled);
     }
 
 

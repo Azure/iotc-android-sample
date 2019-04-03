@@ -15,8 +15,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.adapters.AppAdapter;
+import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
+import com.github.lucadruda.iotcentral.service.exceptions.DataException;
 import com.microsoft.aad.adal.AuthenticationContext;
 
 
@@ -42,13 +44,15 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
 
+    private LoadingAlert appLoadingAlert;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         authContext = Authentication.create(getActivity(), this);
-
+        appLoadingAlert = new LoadingAlert(this, "Loading applications");
 
         loginButton = (Button) findViewById(R.id.login);
         signOutButton = (Button) findViewById(R.id.logout);
@@ -89,6 +93,15 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+/*        if (BuildConfig.DEBUG) {
+            final String iotctoken = getResources().getString(R.string.auth);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getAuthCallback().onSuccess(iotctoken, "Luca");
+                }
+            }).start();
+        }*/
     }
 
     //
@@ -201,6 +214,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateApps(String token, final String userName) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                appLoadingAlert.start();
+            }
+        });
         try {
             if (token != null && token.length() > 0) {
                 iotcDataClient = IoTCentral.createDataClient(token);
@@ -217,6 +236,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    appLoadingAlert.stop();
                     updateSuccessUI(text, userName);
                 }
             });
@@ -228,7 +248,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (DataException e) {
+            e.printStackTrace();
         }
+
     }
 
 }

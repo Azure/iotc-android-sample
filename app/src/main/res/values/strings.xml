@@ -8,18 +8,22 @@
     <string name="masterkey">Master Key</string>
     <string name="deviceid">Device Id</string>
     <string name="models">Models</string>
+    <string name="devices">Devices</string>
     <string name="next">Next</string>
     <string name="connect">Connect</string>
     <string name="create">Create</string>
+    <string name="create_device">Create New</string>
     <string name="directory">Directory</string>
     <string name="subscription">Subscription</string>
     <string name="region">Region</string>
     <string name="rg">Resource Group</string>
-    <string name="addrg">Create new</string>
+    <string name="addrg">Create new +</string>
     <string name="appName">Application name</string>
     <string name="URL">URL</string>
     <string name="freeApp">Trial</string>
     <string name="paidApp">Pay-As-You-Go</string>
+    <string name="contoso">Contoso</string>
+    <string name="devkit">DevKit</string>
     <string name="domain">.azureiotcentral.com</string>
     <string name="linktofree">Please create a trial app through https://apps.azureiotcentral.com</string>
     <string name="loadingData">Loading...</string>
@@ -42,6 +46,6 @@
     <string name="select_telemetry">Select a telemetry property...</string>
 
     <string name="deviceid_hint">DeviceId can only have lowercase characters</string>
-
+    <string name="app_running">Application Running</string>
 
 </resources>

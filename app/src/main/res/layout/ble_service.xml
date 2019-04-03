@@ -1,35 +1,63 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:layout_margin="10dp"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_marginStart="9dp"
-        android:layout_marginEnd="9dp"
-        android:orientation="vertical">
+    <TableLayout
+    android:id="@+id/tableLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:layout_marginStart="9dp"
+    android:layout_marginEnd="9dp"
+    android:orientation="vertical"
+    android:stretchColumns="1">
+
+    <TableRow>
 
         <TextView
             android:id="@+id/deviceIdLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_column="1"
             android:text="@string/deviceid"
             android:textSize="18sp" />
 
+    </TableRow>
+
+    <TableRow
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+
         <EditText
             android:id="@+id/deviceId"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:autofillHints="@string/deviceid_hint"
-            android:hint="@string/deviceid_hint"
-            android:inputType="text"
+            android:layout_column="1"
             android:textSize="18sp" />
 
-    </LinearLayout>
+
+        <ImageView
+            android:id="@+id/iconOK"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:layout_column="2"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_check_black_24dp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/iconFAIL"
+            android:layout_width="30dp"
+            android:layout_height="wrap_content"
+            android:layout_column="2"
+            android:layout_gravity="end"
+            android:src="@drawable/ic_clear_black_24dp"
+            android:visibility="gone" />
+    </TableRow>
+</TableLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -55,34 +83,33 @@
             android:textSize="18sp" />
     </LinearLayout>
 
-    <RelativeLayout
+
+    <ExpandableListView
+        android:id="@+id/gatt_services_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="visible"></ExpandableListView>
+
+    <TextView
+        android:id="@+id/logView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/connectBLE"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|end"
+        android:enabled="false"
+        android:text="@string/connect" />
 
-        <ExpandableListView
-            android:id="@+id/gatt_services_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/connectBLE"
-            android:visibility="gone">
-
-
-        </ExpandableListView>
-
-        <ProgressBar
-            android:id="@+id/connectionProgress"
-            android:layout_width="30dp"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/connectBLE"
-            android:layout_centerInParent="true" />
-
-        <Button
-            android:id="@+id/connectBLE"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:enabled="false"
-            android:text="@string/connect" />
-    </RelativeLayout>
+    <Button
+        android:id="@+id/disconnectBLE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|end"
+        android:text="@string/menu_disconnect"
+        android:visibility="gone" />
 </LinearLayout>

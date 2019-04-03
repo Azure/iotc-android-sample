@@ -28,13 +28,13 @@ public class SampleGattAttributes {
         attributes.put("00002a05-0000-1000-8000-00805f9b34fb", "Service Changed");
         attributes.put("00002a00-0000-1000-8000-00805f9b34fb", "Device Name");
         attributes.put("00002a01-0000-1000-8000-00805f9b34fb", "Appearance");
-        attributes.put("00010000-0001-11e1-ac36-0002a5d5c51b", "Temperature\t");
-        attributes.put("00020000-0001-11e1-ac36-0002a5d5c51b", "Battery\t");
-        attributes.put("00080000-0001-11e1-ac36-0002a5d5c51b", "Humidity\t");
-        attributes.put("00800000-0001-11e1-ac36-0002a5d5c51b", "Acceleration\t");
-        attributes.put("00400000-0001-11e1-ac36-0002a5d5c51b", "Gyroscope\t");
-        attributes.put("00100000-0001-11e1-ac36-0002a5d5c51b", "Pressure\t");
-        attributes.put("04000000-0001-11e1-ac36-0002a5d5c51b", "MicLevel\t");
+        attributes.put("00010000-0001-11e1-ac36-0002a5d5c51b", "Temperature");
+        attributes.put("00020000-0001-11e1-ac36-0002a5d5c51b", "Battery");
+        attributes.put("00080000-0001-11e1-ac36-0002a5d5c51b", "Humidity");
+        attributes.put("00800000-0001-11e1-ac36-0002a5d5c51b", "Acceleration");
+        attributes.put("00400000-0001-11e1-ac36-0002a5d5c51b", "Gyroscope");
+        attributes.put("00100000-0001-11e1-ac36-0002a5d5c51b", "Pressure");
+        attributes.put("04000000-0001-11e1-ac36-0002a5d5c51b", "MicLevel");
 
     }
 

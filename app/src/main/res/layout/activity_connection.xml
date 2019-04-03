@@ -38,12 +38,6 @@
                 android:layout_column="1"
                 android:textSize="18sp" />
 
-            <ProgressBar
-                android:id="@+id/connectionProgress"
-                android:layout_width="30dp"
-                android:layout_height="wrap_content"
-                android:layout_column="2"
-                android:layout_gravity="end" />
 
             <ImageView
                 android:id="@+id/iconOK"
@@ -97,4 +91,13 @@
         android:layout_gravity="right"
         android:enabled="false"
         android:text="@string/menu_disconnect" />
+
+    <Button
+        android:id="@+id/connectBLE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:enabled="false"
+        android:text="@string/connect"
+        android:visibility="gone" />
 </LinearLayout>

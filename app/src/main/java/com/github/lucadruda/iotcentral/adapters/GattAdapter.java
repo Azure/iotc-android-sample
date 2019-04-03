@@ -16,9 +16,12 @@ import android.widget.TextView;
 import com.github.lucadruda.iotcentral.IoTCentral;
 import com.github.lucadruda.iotcentral.R;
 import com.github.lucadruda.iotcentral.bluetooth.SampleGattAttributes;
+import com.github.lucadruda.iotcentral.helpers.GattPair;
+import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.service.types.Measure;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class GattAdapter extends BaseExpandableListAdapter {
@@ -28,13 +31,24 @@ public class GattAdapter extends BaseExpandableListAdapter {
     private Activity context;
     private final String unknownServiceString;
     private final String unknownCharaString;
+    private final String deviceName;
+    private final MappingStorage storage;
+    private HashMap<String, MeasureAdapter> mappings;
 
 
-    public GattAdapter(Activity context, List<BluetoothGattService> services, List<Measure> measures) {
+    public GattAdapter(Activity context, String deviceName, List<BluetoothGattService> services, List<Measure> measures) {
         this.context = context;
         this.services = services;
+        this.mappings = new HashMap<>();
         this.measures = measures;
+        this.deviceName = deviceName;
+        this.storage = new MappingStorage(context.getApplicationContext(), deviceName);
         this.measures.add(0, new Measure(MeasureAdapter.DEFAULT_TEXT_KEY, context.getResources().getString(R.string.select_telemetry), Measure.MeasureType.EVENT));
+        for (BluetoothGattService service : this.services) {
+            for (BluetoothGattCharacteristic chars : service.getCharacteristics()) {
+                this.mappings.put(chars.getUuid().toString(), new MeasureAdapter(context, android.R.id.text1, new ArrayList<Measure>(measures), new GattPair(chars).getKey()));
+            }
+        }
         this.unknownServiceString = context.getResources().getString(R.string.unknown_service);
         this.unknownCharaString = context.getResources().getString(R.string.unknown_characteristic);
     }
@@ -75,9 +89,14 @@ public class GattAdapter extends BaseExpandableListAdapter {
         uuid.setText(characteristic.getUuid().toString());
 
         Spinner measureSpinner = (Spinner) convertView.findViewById(R.id.telemetrySpinner);
-        MeasureAdapter adapter = new MeasureAdapter(context, android.R.id.text1, new ArrayList<Measure>(measures), name);
+        MeasureAdapter adapter = mappings.get(characteristic.getUuid().toString());
         measureSpinner.setAdapter(adapter);
         measureSpinner.setOnItemSelectedListener(adapter.getOnItemSelectedListener());
+        String iotcTelemetry = storage.getIoTCTelemetry(new GattPair(characteristic).getKey());
+        if (iotcTelemetry != null) {
+            measureSpinner.setSelection(adapter.getPosition(iotcTelemetry), true);
+        }
+
         return convertView;
     }
 

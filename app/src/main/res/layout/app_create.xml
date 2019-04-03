@@ -1,42 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0d0e0f">
-
-    <TextView
-        android:id="@+id/linkText"
-        android:layout_width="330dp"
-        android:layout_height="170dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="184dp"
-        android:layout_marginEnd="8dp"
-        android:background="#1a1d1e"
-        android:linksClickable="true"
-        android:text="@string/linktofree"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.492"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:background="#0d0e0f"
+    android:orientation="vertical">
 
     <RadioGroup
         android:id="@+id/appTypeGroup"
         android:layout_width="351dp"
         android:layout_height="84dp"
+        android:layout_gravity="center_horizontal"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="54dp"
         android:layout_marginEnd="8dp"
         android:background="#1a1d1e"
         android:orientation="horizontal"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:visibility="visible">
 
         <RadioButton
             android:id="@+id/freeBtn"
@@ -46,7 +27,6 @@
             android:background="#1a1d1e"
             android:buttonTint="#FFFFFF"
             android:checked="true"
-            android:gravity="center"
             android:text="@string/freeApp"
             android:textColor="#FFFFFF" />
 
@@ -57,237 +37,198 @@
             android:layout_weight="1"
             android:background="#1a1d1e"
             android:buttonTint="#FFFFFF"
-            android:gravity="center"
             android:text="@string/paidApp"
             android:textColor="#FFFFFF" />
     </RadioGroup>
 
+    <TextView
+        android:id="@+id/linkText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="40dp"
+        android:background="#1a1d1e"
+        android:linksClickable="true"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:text="@string/linktofree"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:visibility="visible" />
+
+    <RadioGroup
+        android:id="@+id/templateGroup"
+        android:layout_width="332dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:background="#1a1d1e"
+        android:orientation="horizontal"
+        android:visibility="visible"
+        android:weightSum="2">
+
+        <RadioButton
+            android:id="@+id/contosoBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#1a1d1e"
+            android:buttonTint="#FFFFFF"
+            android:checked="true"
+            android:text="@string/contoso"
+            android:textColor="#FFFFFF" />
+
+        <RadioButton
+            android:id="@+id/devkitBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#1a1d1e"
+            android:buttonTint="#FFFFFF"
+            android:text="@string/devkit"
+            android:textColor="#FFFFFF" />
+    </RadioGroup>
+
+
     <ScrollView
         android:id="@+id/paidScroll"
-        android:layout_width="390dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="116dp"
-        android:layout_marginEnd="8dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:layout_weight="1"
+        android:visibility="visible">
 
-        <FrameLayout
-            android:id="@+id/paidGroup"
-            android:layout_width="405dp"
-            android:layout_height="520dp"
-            android:paddingTop="20dp"
-            android:visibility="visible">
 
-            <RelativeLayout
-                android:layout_width="332dp"
-                android:layout_height="54dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginEnd="8dp"
-                android:background="#1a1d1e"
-                android:visibility="visible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <Spinner
-                    android:id="@+id/tenantSpinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </RelativeLayout>
-
-            <Spinner
-                android:id="@+id/subscriptionsSpinner"
-                android:layout_width="332dp"
-                android:layout_height="54dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="100dp"
-                android:layout_marginEnd="8dp"
-                android:background="#1a1d1e"
-                android:visibility="visible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Spinner
-                android:id="@+id/resourceGroupsSpinner"
-                android:layout_width="332dp"
-                android:layout_height="54dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="270dp"
-                android:layout_marginEnd="8dp"
-                android:background="#1a1d1e"
-                android:visibility="visible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Spinner
-                android:id="@+id/regionSpinner"
-                android:layout_width="332dp"
-                android:layout_height="54dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="190dp"
-                android:layout_marginEnd="8dp"
-                android:background="#1a1d1e"
-                android:visibility="visible"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/tenantSpinnerLabel"
                 android:layout_width="wrap_content"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:text="@string/directory"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content"
+                android:labelFor="@id/tenantSpinner"
+                android:text="@string/directory" />
+
+            <Spinner
+                android:id="@+id/tenantSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="10dp" />
 
             <TextView
                 android:id="@+id/subscriptionLabel"
-                android:layout_width="93dp"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="80dp"
-                android:text="@string/subscription"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@id/subscriptionsSpinner"
+                android:text="@string/subscription" />
+
+            <Spinner
+                android:id="@+id/subscriptionsSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="10dp" />
 
             <TextView
                 android:id="@+id/regionLabel"
-                android:layout_width="93dp"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="170dp"
-                android:text="@string/region"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/rgLabel"
                 android:layout_width="wrap_content"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="250dp"
-                android:text="@string/rg"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content"
+                android:labelFor="@id/regionSpinner"
+                android:text="@string/region" />
 
-            <TextView
-                android:id="@+id/urlLabel"
-                android:layout_width="188dp"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="420dp"
-                android:labelFor="@id/urlText"
-                android:text="@string/URL"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+            <Spinner
+                android:id="@+id/regionSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/rgLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:labelFor="@id/resourceGroupsSpinner"
+                    android:text="@string/rg" />
+
+                <TextView
+                    android:id="@+id/addRg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:paddingEnd="5dp"
+                    android:text="@string/addrg" />
+            </LinearLayout>
+
+            <Spinner
+                android:id="@+id/resourceGroupsSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="10dp" />
 
             <TextView
                 android:id="@+id/appNameLabel"
-                android:layout_width="188dp"
-                android:layout_height="19dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="330dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:labelFor="@id/appNameText"
-                android:text="@string/appName"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
+                android:text="@string/appName" />
 
             <EditText
                 android:id="@+id/appNameText"
-                android:layout_width="332dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="350dp"
-                android:background="#1a1d1e"
-                android:inputType=""
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="o" />
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:inputType="" />
 
             <TextView
-                android:id="@+id/domain"
-                android:layout_width="140dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="236dp"
-                android:layout_marginTop="440dp"
-                android:background="#1a1d1e"
-                android:text="@string/domain"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="o" />
-
-            <EditText
-                android:id="@+id/urlText"
-                android:layout_width="197dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="440dp"
-                android:autofillHints=""
-                android:background="#1a1d1e"
-                android:inputType=""
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="o" />
-
-            <Button
-                android:id="@+id/createAppBtn"
-                android:layout_width="100dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="236dp"
-                android:layout_marginTop="490dp"
-                android:autofillHints=""
-                android:background="#FFFFFF"
-                android:text="@string/create"
-                android:textColor="#000000"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="o" />
-
-            <TextView
-                android:id="@+id/addRg"
+                android:id="@+id/urlLabel"
                 android:layout_width="wrap_content"
-                android:layout_height="19dp"
-                android:layout_marginStart="250dp"
-                android:layout_marginTop="250dp"
-                android:text="@string/addrg"
-                android:textColor="#FFFFFF"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_height="wrap_content"
+                android:labelFor="@id/urlText"
+                android:text="@string/URL" />
 
-        </FrameLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <EditText
+                    android:id="@+id/urlText"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:inputType="" />
+
+                <TextView
+                    android:id="@+id/domain"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:text="@string/domain" />
+            </LinearLayout>
+
+
+        </LinearLayout>
 
 
     </ScrollView>
-</android.support.constraint.ConstraintLayout>
+
+    <Button
+        android:id="@+id/createAppBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|end"
+        android:layout_marginTop="10dp"
+        android:text="@string/create" />
+</LinearLayout>

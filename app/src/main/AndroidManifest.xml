@@ -30,9 +30,13 @@
         <activity android:name=".ApplicationCreationActivity"></activity>
         <activity android:name=".DeviceScanActivity"></activity>
         <activity android:name=".BLEActivity" />
+        <activity android:name=".ConnectionActivity" />
 
         <service
             android:name=".services.BLEService"
+            android:enabled="true" />
+        <service
+            android:name=".services.DeviceService"
             android:enabled="true" />
     </application>
 

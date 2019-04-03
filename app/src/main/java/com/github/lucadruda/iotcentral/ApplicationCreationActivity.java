@@ -7,37 +7,32 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
-import com.github.lucadruda.iotcentral.service.DataClient;
-import com.github.lucadruda.iotcentral.service.User;
+import com.github.lucadruda.iotcentral.service.exceptions.DataException;
+import com.github.lucadruda.iotcentral.service.templates.ContosoTemplate;
 import com.github.lucadruda.iotcentral.service.templates.DevKitTemplate;
+import com.github.lucadruda.iotcentral.service.templates.IoTCTemplate;
 import com.github.lucadruda.iotcentral.service.types.ResourceGroup;
 import com.github.lucadruda.iotcentral.service.types.Subscription;
 import com.github.lucadruda.iotcentral.service.types.Tenant;
 import com.microsoft.aad.adal.AuthenticationContext;
-import com.microsoft.aad.adal.AuthenticationResult;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 import java.io.IOException;
@@ -68,12 +63,13 @@ public class ApplicationCreationActivity extends AppCompatActivity {
     private String refreshToken;
     private boolean authenticated = false;
     private AuthenticationContext authContext;
+    private IoTCTemplate ioTCTemplate;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.app_create);
+        setContentView(R.layout.app_create_backup);
         tenantSpinner = findViewById(R.id.tenantSpinner);
         subscriptionsSpinner = findViewById(R.id.subscriptionsSpinner);
         resourceGroupsSpinner = findViewById(R.id.resourceGroupsSpinner);
@@ -82,6 +78,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
         appType = findViewById(R.id.appTypeGroup);
         createBtn = findViewById(R.id.createAppBtn);
         regionSpinner = findViewById(R.id.regionSpinner);
+        ioTCTemplate = new ContosoTemplate();
         regionSpinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item, getResources().getStringArray(R.array.ARMRegions)) {
 
             @Override
@@ -115,6 +112,18 @@ public class ApplicationCreationActivity extends AppCompatActivity {
             }
         });
 
+        ((RadioGroup) findViewById(R.id.templateGroup)).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                int radioBtnID = group.getCheckedRadioButtonId();
+
+                RadioButton radioBtn = group.findViewById(radioBtnID);
+                if (radioBtn.getId() == R.id.contosoBtn) {
+                    ioTCTemplate = new ContosoTemplate();
+                } else {
+                    ioTCTemplate = new DevKitTemplate();
+                }
+            }
+        });
         tenantSpinner.setPrompt("Select tenant");
 
         tenantSpinner.setOnItemSelectedListener(getTenenatSelection());
@@ -177,7 +186,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                         resourceGroup = String.valueOf(resourceGroupsSpinner.getSelectedItem());
                     }
                     ARMClient iotc = IoTCentral.getArmClient();
-                    Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), new DevKitTemplate());
+                    Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), ioTCTemplate);
                     startLoader(getActivity());
                     iotc.setResourceGroup(resourceGroup);
                     iotc.createApplication(application);
@@ -227,7 +236,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                             }
                         });
 
-                    } catch (IOException e) {
+                    } catch (DataException e) {
                         e.printStackTrace();
                     }
                 } catch (InterruptedException e) {
@@ -279,7 +288,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
 
                             }
                         });
-                    } catch (IOException e) {
+                    } catch (DataException e) {
                         e.printStackTrace();
                     }
                 } catch (InterruptedException e) {
@@ -366,7 +375,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                         }
                     });
 
-                } catch (IOException e) {
+                } catch (DataException e) {
                     e.printStackTrace();
                 }
             }

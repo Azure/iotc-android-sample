@@ -32,10 +32,12 @@ import com.github.lucadruda.iotcentral.service.Application;
 public class DeviceScanActivity extends AppCompatActivity {
     private BLEAdapter devicesAdapter;
     private BluetoothLeScanner bleScanner;
+    private BluetoothAdapter bluetoothAdapter;
     private RecyclerView scannedView;
     private boolean mScanning;
     private Handler mHandler;
-
+    private boolean deviceExists;
+    private String deviceName;
     private Application application;
     private String templateId;
 
@@ -46,15 +48,38 @@ public class DeviceScanActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.provision_activity);
+        setContentView(R.layout.device_scan_activity);
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
-        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
+        templateId = getIntent().getStringExtra(Constants.DEVICE_TEMPLATE_ID);
+        deviceExists = getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false);
+        deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
         getSupportActionBar().setTitle(application.getName() + " - " + getString(R.string.scanBleTitle));
         scannedView = findViewById(R.id.scannedView);
         scannedView.setHasFixedSize(true);
         scannedView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mHandler = new Handler();
+// Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+            finish();
+        }
 
+        final BluetoothManager bluetoothManager =
+                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        bleScanner = bluetoothAdapter.getBluetoothLeScanner();
+
+        if (bleScanner == null) {
+            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
     }
 
     @Override
@@ -94,23 +119,7 @@ public class DeviceScanActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-            finish();
-        }
 
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter bluetoothAdapter = bluetoothManager.getAdapter();
-        bleScanner = bluetoothAdapter.getBluetoothLeScanner();
-
-        if (bleScanner == null) {
-            Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
         checkPermissions(this);
         if (!bluetoothAdapter.isEnabled()) {
             if (!bluetoothAdapter.isEnabled()) {
@@ -202,7 +211,14 @@ public class DeviceScanActivity extends AppCompatActivity {
                 return;
             }
             final Intent intent = new Intent(getActivity(), BLEActivity.class);
-            intent.putExtra(Constants.DEVICE_NAME, device.getName());
+
+            if (deviceExists && deviceName != null) {
+                intent.putExtra(Constants.DEVICE_EXISTS, true);
+
+            } else {
+                deviceName = device.getName();
+            }
+            intent.putExtra(Constants.DEVICE_NAME, deviceName);
             intent.putExtra(Constants.DEVICE_ADDRESS, device.getAddress());
             intent.putExtra(Constants.APPLICATION, application);
             intent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
