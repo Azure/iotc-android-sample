@@ -48,9 +48,23 @@ public class DeviceService extends Service {
     private Device device;
 
 
+    private final IBinder mBinder = new LocalBinder();
+
+    public class LocalBinder extends Binder {
+        // return the current instance. The service intent is responsible to instantiate the class
+        public DeviceService getService() {
+            return DeviceService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return mBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return super.onUnbind(intent);
     }
 
 
@@ -82,8 +96,7 @@ public class DeviceService extends Service {
 
             startForeground(1, notification);
         }
-        initialize();
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
 
@@ -133,7 +146,7 @@ public class DeviceService extends Service {
         }).start();
     }
 
-    public void connectDevice() {
+    protected void connectDevice() {
         new Thread(new Runnable() {
             @Override
             public void run() {

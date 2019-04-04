@@ -119,7 +119,7 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                 String key = item.getFieldName();
                 Intent dataChangeIntent = new Intent(MEASURE_DATASTORE_CHANGE);
                 Intent assignmentIntent = new Intent(BLEService.TELEMETRY_ASSIGNED);
-                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT, gattPair);
+                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT_PAIR, gattPair);
                 assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_IOTC, key);
                 if (currentKey.equals(key)) {
                     return;

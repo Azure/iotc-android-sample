@@ -24,7 +24,7 @@ public class GenericTarget extends Target {
 
     @Override
     protected HashMap<String, Feature> setFeatures() {
-        return null;
+        return new HashMap<>();
     }
 
     @Override
@@ -33,6 +33,7 @@ public class GenericTarget extends Target {
             put("00001800-0000", new Service("Generic Access", "00001800-0000"));
             put("0000180a-0000", new Service("Device Information Service", "0000180a-0000"));
             put("00001801-0000", new Service("Generic Attribute", "00001801-0000"));
+            put("0000180F-0000", new Service("Generic Battery", "0000180F-0000"));
         }};
 
     }

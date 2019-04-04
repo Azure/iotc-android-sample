@@ -29,8 +29,9 @@
         <activity android:name=".DeviceActivity"></activity>
         <activity android:name=".ApplicationCreationActivity"></activity>
         <activity android:name=".DeviceScanActivity"></activity>
-        <activity android:name=".BLEActivity" />
-        <activity android:name=".ConnectionActivity" />
+        <activity
+            android:name=".BLEActivity"
+            android:windowSoftInputMode="stateHidden" />
 
         <service
             android:name=".services.BLEService"

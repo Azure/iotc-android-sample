@@ -45,7 +45,7 @@ public class BLEService extends Service {
     public final static String TELEMETRY_ASSIGNED =
             "TELEMETRY_ASSIGNED";
 
-    public final static String MEASURE_MAPPING_GATT = "MEASURE_MAPPING_GATT";
+    public final static String MEASURE_MAPPING_GATT_PAIR = "MEASURE_MAPPING_GATT_PAIR";
     public final static String MEASURE_MAPPING_IOTC = "MEASURE_MAPPING_IOTC";
 
     private final IBinder mBinder = new LocalBinder();
@@ -123,7 +123,7 @@ public class BLEService extends Service {
            /* final StringBuilder stringBuilder = new StringBuilder(data.length);
             for (byte byteChar : data)
                 stringBuilder.append(String.format("%02X ", byteChar));*/
-            intent.putExtra(MEASURE_MAPPING_GATT, new GattPair(characteristic).getKey());
+            intent.putExtra(MEASURE_MAPPING_GATT_PAIR, new GattPair(characteristic).getKey());
             intent.putExtra(EXTRA_DATA, data);
         }
         sendBroadcast(intent);
@@ -200,8 +200,13 @@ public class BLEService extends Service {
             return;
         }
         GattPair pair = new GattPair(gattPair);
-        BluetoothGattCharacteristic chars = blGatt.getService(pair.getServiceUUID()).getCharacteristic(pair.getCharacteristicUUID());
-        readCharacteristic(chars);
+        BluetoothGattService service = blGatt.getService(pair.getServiceUUID());
+        if (service != null) {
+            BluetoothGattCharacteristic chars = service.getCharacteristic(pair.getCharacteristicUUID());
+            if (chars != null) {
+                readCharacteristic(chars);
+            }
+        }
     }
 
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
@@ -218,8 +223,14 @@ public class BLEService extends Service {
             return;
         }
         GattPair pair = new GattPair(gattPair);
-        BluetoothGattCharacteristic chars = blGatt.getService(pair.getServiceUUID()).getCharacteristic(pair.getCharacteristicUUID());
-        setCharacteristicNotification(chars, enabled);
+        BluetoothGattService service = blGatt.getService(pair.getServiceUUID());
+        if (service != null) {
+            BluetoothGattCharacteristic chars = service.getCharacteristic(pair.getCharacteristicUUID());
+            if (chars != null) {
+                setCharacteristicNotification(chars, enabled);
+            }
+        }
+
     }
 
 

@@ -21,6 +21,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.adapters.BLEAdapter;
@@ -58,6 +59,8 @@ public class DeviceScanActivity extends AppCompatActivity {
         scannedView.setHasFixedSize(true);
         scannedView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mHandler = new Handler();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {

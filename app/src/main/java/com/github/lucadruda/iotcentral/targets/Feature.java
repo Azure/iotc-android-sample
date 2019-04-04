@@ -15,7 +15,11 @@ public class Feature {
 
 
     public float getData(byte[] data) {
-        return ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+        ByteBuffer buffer = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+        if (data.length == 1) {
+            return (float) (buffer.get(0) & 0xFF);
+        }
+        return buffer.getShort();
     }
 
     public String getName() {

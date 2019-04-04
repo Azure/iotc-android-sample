@@ -22,7 +22,9 @@ public class LoadingAlert {
     }
 
     public void stop() {
-        loadingAlert.dismiss();
+        if (loadingAlert != null && loadingAlert.isShowing()) {
+            loadingAlert.dismiss();
+        }
     }
 
     public boolean isStarted() {

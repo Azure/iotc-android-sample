@@ -15,6 +15,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
@@ -30,6 +31,8 @@ import com.github.lucadruda.iotcentral.services.BLEService;
 import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.services.DeviceService;
+import com.github.lucadruda.iotcentral.targets.Feature;
+import com.github.lucadruda.iotcentral.targets.Targets;
 
 import java.util.HashMap;
 import java.util.Random;
@@ -68,6 +71,20 @@ public class BLEActivity extends AppCompatActivity {
         }
     };
 
+    private final ServiceConnection iotcServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            // service connected. let's connect the BLE service
+            deviceService = ((DeviceService.LocalBinder) service).getService();
+            deviceService.initialize();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            bleService = null;
+        }
+    };
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,25 +106,31 @@ public class BLEActivity extends AppCompatActivity {
         traceManager = new TraceManager(logView);
         storage = new MappingStorage(getApplicationContext(), deviceName);
         getSupportActionBar().setTitle(deviceName);
+        findViewById(R.id.disconnectBLE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deviceService.disconnectDevice();
+            }
+        });
         gattLoader = new LoadingAlert(this, "Loading services");
         gattLoader.start();
         iotcLoader = new LoadingAlert(this, "Connecting device");
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // binding to background BLE service and GATT manager
-        Intent bleServiceIntent = new Intent(this, BLEService.class);
-        bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, getReceiverFilter());
-        registerReceiver(updateReceiver, getReceiverFilter());
 
     }
 
-/*    @Override
+    @Override
     protected void onResume() {
         super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, getReceiverFilter());
         registerReceiver(updateReceiver, getReceiverFilter());
-
         if (bleService != null) {
             final boolean result = bleService.connect(deviceAddress);
+        } else {
+            Intent bleServiceIntent = new Intent(this, BLEService.class);
+            bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
         }
     }
 
@@ -115,18 +138,9 @@ public class BLEActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(updateReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(updateReceiver);
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        if (gattLoader.isStarted()) {
-            gattLoader.stop();
-        }
-        if (iotcLoader.isStarted()) {
-            iotcLoader.stop();
-        }
-    }*/
 
     @Override
     protected void onDestroy() {
@@ -150,7 +164,12 @@ public class BLEActivity extends AppCompatActivity {
         if (gattLoader.isStarted()) {
             gattLoader.stop();
         }
-        super.onBackPressed();
+        if (serviceList.getVisibility() == View.VISIBLE) {
+            super.onBackPressed();
+        } else {
+            serviceList.setVisibility(View.VISIBLE);
+            logView.setVisibility(View.GONE);
+        }
     }
 
     private Activity getActivity() {
@@ -172,10 +191,10 @@ public class BLEActivity extends AppCompatActivity {
                 serviceList.setAdapter(new GattAdapter(getActivity(), deviceName, bleService.getSupportedGattServices(), IoTCentral.getMeasures(templateId)));
             } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
 // data available
-                retrieveData(intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT), intent.getByteArrayExtra(BLEService.EXTRA_DATA));
+                retrieveData(intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT_PAIR), intent.getByteArrayExtra(BLEService.EXTRA_DATA));
             } else if (BLEService.TELEMETRY_ASSIGNED.equals(action)) {
 
-                String gattPair = intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT);
+                String gattPair = intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT_PAIR);
                 String telemetryID = intent.getStringExtra(BLEService.MEASURE_MAPPING_IOTC);
                 if (gattPair != null) {
                     if (telemetryID != null) {
@@ -198,11 +217,15 @@ public class BLEActivity extends AppCompatActivity {
                         logView.setVisibility(View.VISIBLE);
                         initTelemetry();
                         findViewById(R.id.iconOK).setVisibility(View.VISIBLE);
+                        findViewById(R.id.iconFAIL).setVisibility(View.GONE);
+
                         findViewById(R.id.disconnectBLE).setVisibility(View.VISIBLE);
                         findViewById(R.id.connectBLE).setVisibility(View.GONE);
 
                     } else {
                         findViewById(R.id.iconFAIL).setVisibility(View.VISIBLE);
+                        findViewById(R.id.iconOK).setVisibility(View.GONE);
+
                         findViewById(R.id.disconnectBLE).setVisibility(View.GONE);
                         findViewById(R.id.connectBLE).setVisibility(View.VISIBLE);
                     }
@@ -243,29 +266,22 @@ public class BLEActivity extends AppCompatActivity {
     }
 
     private void connectIoTCService() {
-        Intent iotcServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
-        iotcServiceIntent.putExtra(Constants.DEVICE_NAME, deviceName);
-        iotcServiceIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
-        iotcServiceIntent.putExtra(Constants.APPLICATION, application);
-        iotcServiceIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(iotcServiceIntent);
-        } else {
-            startService(iotcServiceIntent);
+        if (deviceService == null) {
+            Intent iotcServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
+            iotcServiceIntent.putExtra(Constants.DEVICE_NAME, deviceName);
+            iotcServiceIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
+            iotcServiceIntent.putExtra(Constants.APPLICATION, application);
+            iotcServiceIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(iotcServiceIntent);
+            } else {
+                startService(iotcServiceIntent);
+            }
+            bindService(iotcServiceIntent, iotcServiceConnection, BIND_AUTO_CREATE);
         }
-        findViewById(R.id.disconnectBLE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deviceService.disconnectDevice();
-            }
-        });
-
-        findViewById(R.id.connectBLE).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deviceService.connectDevice();
-            }
-        });
+        else{
+            deviceService.initialize();
+        }
     }
 
     private void initTelemetry() {
@@ -283,8 +299,10 @@ public class BLEActivity extends AppCompatActivity {
 
     private void retrieveData(String gattKey, byte[] data) {
         String iotcField = storage.getIoTCTelemetry(gattKey);
+        Feature feature = Targets.featureslookup(new GattPair(gattKey).getCharacteristicUUID().toString());
         // parse value
         // deviceService.sendTelemetry(iotcField, data.toString());
-        deviceService.sendTelemetry(iotcField, "" + (new Random().nextInt(100)));
+        traceManager.trace("Sending " + iotcField + " telemetry");
+        deviceService.sendTelemetry(iotcField, "" + feature.getData(data));
     }
 }
