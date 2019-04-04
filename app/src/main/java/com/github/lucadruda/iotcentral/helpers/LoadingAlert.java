@@ -14,7 +14,7 @@ public class LoadingAlert {
         builder = new AlertDialog.Builder(context);
         builder.setView(R.layout.loading);
         builder.setMessage(text);
-        builder.setCancelable(false);
+        //builder.setCancelable(false);
     }
 
     public void start() {

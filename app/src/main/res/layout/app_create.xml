@@ -58,39 +58,6 @@
         android:textSize="20sp"
         android:visibility="visible" />
 
-    <RadioGroup
-        android:id="@+id/templateGroup"
-        android:layout_width="332dp"
-        android:layout_height="24dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
-        android:background="#1a1d1e"
-        android:orientation="horizontal"
-        android:visibility="visible"
-        android:weightSum="2">
-
-        <RadioButton
-            android:id="@+id/contosoBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="#1a1d1e"
-            android:buttonTint="#FFFFFF"
-            android:checked="true"
-            android:text="@string/contoso"
-            android:textColor="#FFFFFF" />
-
-        <RadioButton
-            android:id="@+id/devkitBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="#1a1d1e"
-            android:buttonTint="#FFFFFF"
-            android:text="@string/devkit"
-            android:textColor="#FFFFFF" />
-    </RadioGroup>
 
 
     <ScrollView
@@ -100,14 +67,46 @@
         android:layout_marginStart="40dp"
         android:layout_marginEnd="40dp"
         android:layout_weight="1"
-        android:visibility="visible">
+        android:visibility="gone">
 
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+            <RadioGroup
+                android:id="@+id/templateGroup"
+                android:layout_width="332dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginStart="40dp"
+                android:layout_marginEnd="40dp"
+                android:background="#1a1d1e"
+                android:orientation="horizontal"
+                android:visibility="visible"
+                android:weightSum="2">
 
+                <RadioButton
+                    android:id="@+id/contosoBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="#1a1d1e"
+                    android:buttonTint="#FFFFFF"
+                    android:checked="true"
+                    android:text="@string/contoso"
+                    android:textColor="#FFFFFF" />
+
+                <RadioButton
+                    android:id="@+id/devkitBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="#1a1d1e"
+                    android:buttonTint="#FFFFFF"
+                    android:text="@string/devkit"
+                    android:textColor="#FFFFFF" />
+            </RadioGroup>
             <TextView
                 android:id="@+id/tenantSpinnerLabel"
                 android:layout_width="wrap_content"

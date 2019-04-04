@@ -145,6 +145,14 @@ public class BLEActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (gattLoader.isStarted()) {
+            gattLoader.stop();
+        }
+        super.onBackPressed();
+    }
+
     private Activity getActivity() {
         return this;
     }

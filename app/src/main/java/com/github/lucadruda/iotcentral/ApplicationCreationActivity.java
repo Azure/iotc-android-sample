@@ -69,7 +69,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.app_create_backup);
+        setContentView(R.layout.app_create);
         tenantSpinner = findViewById(R.id.tenantSpinner);
         subscriptionsSpinner = findViewById(R.id.subscriptionsSpinner);
         resourceGroupsSpinner = findViewById(R.id.resourceGroupsSpinner);

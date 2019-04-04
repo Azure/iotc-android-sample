@@ -19,6 +19,7 @@ import com.github.lucadruda.iotcentral.bluetooth.SampleGattAttributes;
 import com.github.lucadruda.iotcentral.helpers.GattPair;
 import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.service.types.Measure;
+import com.github.lucadruda.iotcentral.targets.Targets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public class GattAdapter extends BaseExpandableListAdapter {
         LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = mInflater.inflate(R.layout.gatt_service_item, null);
         TextView name = (TextView) convertView.findViewById(R.id.gatt_service_name);
-        name.setText(SampleGattAttributes.lookup(services.get(groupPosition).getUuid().toString(), unknownServiceString));
+        name.setText(Targets.servicelookup(services.get(groupPosition).getUuid().toString()).getName());
         TextView uuid = (TextView) convertView.findViewById(R.id.gatt_service_UUID);
         uuid.setText(services.get(groupPosition).getUuid().toString());
       /*  if(isExpanded){
@@ -82,7 +83,7 @@ public class GattAdapter extends BaseExpandableListAdapter {
 
         // Set the item name
         TextView featureName = (TextView) convertView.findViewById(R.id.featureName);
-        String name = SampleGattAttributes.lookup(characteristic.getUuid().toString(), unknownServiceString);
+        String name = Targets.featureslookup(characteristic.getUuid().toString()).getName();
         featureName.setText(name);
 
         TextView uuid = (TextView) convertView.findViewById(R.id.featureUUID);
