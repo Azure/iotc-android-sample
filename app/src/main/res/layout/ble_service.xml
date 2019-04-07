@@ -5,59 +5,59 @@
     android:orientation="vertical">
 
     <TableLayout
-    android:id="@+id/tableLayout"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="10dp"
-    android:layout_marginStart="9dp"
-    android:layout_marginEnd="9dp"
-    android:orientation="vertical"
-    android:stretchColumns="1">
+        android:id="@+id/tableLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_marginStart="9dp"
+        android:layout_marginEnd="9dp"
+        android:orientation="vertical"
+        android:stretchColumns="1">
 
-    <TableRow>
+        <TableRow>
 
-        <TextView
-            android:id="@+id/deviceIdLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="1"
-            android:text="@string/deviceid"
-            android:textSize="18sp" />
+            <TextView
+                android:id="@+id/deviceIdLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_column="1"
+                android:text="@string/deviceid"
+                android:textSize="18sp" />
 
-    </TableRow>
+        </TableRow>
 
-    <TableRow
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
-
-
-        <EditText
-            android:id="@+id/deviceId"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_column="1"
-            android:textSize="18sp" />
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
 
 
-        <ImageView
-            android:id="@+id/iconOK"
-            android:layout_width="30dp"
-            android:layout_height="wrap_content"
-            android:layout_column="2"
-            android:layout_gravity="end"
-            android:src="@drawable/ic_check_black_24dp"
-            android:visibility="gone" />
+            <EditText
+                android:id="@+id/deviceId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_column="1"
+                android:textSize="18sp" />
 
-        <ImageView
-            android:id="@+id/iconFAIL"
-            android:layout_width="30dp"
-            android:layout_height="wrap_content"
-            android:layout_column="2"
-            android:layout_gravity="end"
-            android:src="@drawable/ic_clear_black_24dp"
-            android:visibility="gone" />
-    </TableRow>
-</TableLayout>
+
+            <ImageView
+                android:id="@+id/iconOK"
+                android:layout_width="30dp"
+                android:layout_height="wrap_content"
+                android:layout_column="2"
+                android:layout_gravity="end"
+                android:src="@drawable/ic_check_black_24dp"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iconFAIL"
+                android:layout_width="30dp"
+                android:layout_height="wrap_content"
+                android:layout_column="2"
+                android:layout_gravity="end"
+                android:src="@drawable/ic_clear_black_24dp"
+                android:visibility="gone" />
+        </TableRow>
+    </TableLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -91,25 +91,48 @@
         android:layout_weight="1"
         android:visibility="visible"></ExpandableListView>
 
-    <TextView
-        android:id="@+id/logView"
+    <ScrollView
+        android:id="@+id/logScroll"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone">
 
-    <Button
-        android:id="@+id/connectBLE"
-        android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/logView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center|end"
-        android:enabled="false"
-        android:text="@string/connect" />
+        android:layout_marginStart="200dp"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/disconnectBLE"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center|end"
-        android:text="@string/menu_disconnect"
-        android:visibility="gone" />
+        <Button
+            android:id="@+id/readBLE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:text="@string/read"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/connectBLE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:enabled="false"
+            android:text="@string/connect" />
+
+        <Button
+            android:id="@+id/disconnectBLE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|end"
+            android:text="@string/menu_disconnect"
+            android:visibility="gone" />
+    </LinearLayout>
 </LinearLayout>

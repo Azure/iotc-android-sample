@@ -5,8 +5,6 @@ import com.github.lucadruda.iotcentral.targets.ST.FeatureTemperature;
 import com.github.lucadruda.iotcentral.targets.Service;
 import com.github.lucadruda.iotcentral.targets.Target;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 
 public class GenericTarget extends Target {
@@ -24,7 +22,11 @@ public class GenericTarget extends Target {
 
     @Override
     protected HashMap<String, Feature> setFeatures() {
-        return new HashMap<>();
+        return new HashMap<String, Feature>() {{
+            put("00002A37-0000", new Feature("Heart Rate", "00002A37-0000"));
+            put("00002A19-0000", new Feature("Battery Level", "00002A19-0000"));
+            put("00002A1C-0000", new FeatureSimTemp("Temperature", "00002A1C-0000"));
+        }};
     }
 
     @Override
@@ -34,6 +36,8 @@ public class GenericTarget extends Target {
             put("0000180a-0000", new Service("Device Information Service", "0000180a-0000"));
             put("00001801-0000", new Service("Generic Attribute", "00001801-0000"));
             put("0000180F-0000", new Service("Generic Battery", "0000180F-0000"));
+            put("0000180D-0000", new Service("Generic Hearth Rate", "0000180D-0000"));
+            put("00001809-0000", new Service("Simulated Health Termometer", "00001809-0000"));
         }};
 
     }

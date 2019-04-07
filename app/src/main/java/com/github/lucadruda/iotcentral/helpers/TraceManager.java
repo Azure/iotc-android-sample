@@ -31,7 +31,7 @@ public class TraceManager {
 
     private void colored(String data, int color) {
         int start = view.getText().length();
-        view.append(data);
+        view.append(data + "\n");
         int end = view.getText().length();
 
         Spannable spannableText = (Spannable) view.getText();

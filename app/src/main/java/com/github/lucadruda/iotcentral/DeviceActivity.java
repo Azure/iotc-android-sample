@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -38,24 +39,29 @@ public class DeviceActivity extends AppCompatActivity {
     private Application application;
     private String templateId;
     private Device[] devices;
-    private RecyclerView scannedView;
+    private RecyclerView devicesView;
     private LoadingAlert templateLoader;
+    private Button newDeviceBtn;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.device_activity);
+        setContentView(R.layout.list_layout);
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
         templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
         getSupportActionBar().setTitle(application.getName());
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        scannedView = findViewById(R.id.modelsView);
-        scannedView.setHasFixedSize(true);
-        scannedView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        devicesView = findViewById(R.id.listView);
+        devicesView.setHasFixedSize(true);
+        devicesView.setLayoutManager(new LinearLayoutManager(getActivity()));
         templateLoader = new LoadingAlert(this, "Loading devices");
         templateLoader.start();
-        findViewById(R.id.newDevice).setOnClickListener(getOnClickListener(false));
+        ((TextView) findViewById(R.id.listTitle)).setText("Devices");
+        newDeviceBtn = findViewById(R.id.serviceButton);
+        newDeviceBtn.setText(R.string.create_device);
+        newDeviceBtn.setVisibility(View.VISIBLE);
+        newDeviceBtn.setOnClickListener(getOnClickListener(false));
         iotcThread.start();
 
     }
@@ -79,7 +85,7 @@ public class DeviceActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         IoTCAdapter dataAdapter = new IoTCAdapter(getActivity(), devices, getOnClickListener(true));
-                        scannedView.setAdapter(dataAdapter);
+                        devicesView.setAdapter(dataAdapter);
                         templateLoader.stop();
                     }
                 });
@@ -93,18 +99,18 @@ public class DeviceActivity extends AppCompatActivity {
         return this;
     }
 
-    private View.OnClickListener getOnClickListener(final boolean deviceId) {
+    private View.OnClickListener getOnClickListener(final boolean exists) {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Device device = (Device) v.getTag();
-                if (device == null) {
-                    return;
-                }
                 Intent appIntent = new Intent(getActivity(), DeviceScanActivity.class);
                 appIntent.putExtra(Constants.APPLICATION, application);
                 appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
-                if (deviceId) {
+                if (exists) {
+                    final Device device = (Device) v.getTag();
+                    if (device == null) {
+                        return;
+                    }
                     appIntent.putExtra(Constants.DEVICE_NAME, device.getDeviceId());
                     appIntent.putExtra(Constants.DEVICE_EXISTS, true);
                 }

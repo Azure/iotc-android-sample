@@ -24,7 +24,7 @@ public class Service {
 
     public boolean lookup(String uuid) {
         String prefix = uuid.substring(0, 13);
-        if (getId().equals(prefix)) {
+        if (getId().equalsIgnoreCase(prefix)) {
             return true;
         }
         return false;

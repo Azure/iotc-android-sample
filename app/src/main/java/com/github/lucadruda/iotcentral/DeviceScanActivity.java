@@ -49,13 +49,15 @@ public class DeviceScanActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.device_scan_activity);
+        setContentView(R.layout.list_layout);
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
         templateId = getIntent().getStringExtra(Constants.DEVICE_TEMPLATE_ID);
         deviceExists = getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false);
-        deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
+        if (deviceExists) {
+            deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
+        }
         getSupportActionBar().setTitle(application.getName() + " - " + getString(R.string.scanBleTitle));
-        scannedView = findViewById(R.id.scannedView);
+        scannedView = findViewById(R.id.listView);
         scannedView.setHasFixedSize(true);
         scannedView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mHandler = new Handler();

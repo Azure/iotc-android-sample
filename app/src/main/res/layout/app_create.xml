@@ -9,14 +9,16 @@
 
     <RadioGroup
         android:id="@+id/appTypeGroup"
-        android:layout_width="351dp"
-        android:layout_height="84dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="54dp"
-        android:layout_marginEnd="8dp"
+        android:layout_marginEnd="20dp"
         android:background="#1a1d1e"
         android:orientation="horizontal"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:visibility="visible">
 
         <RadioButton
@@ -33,7 +35,7 @@
         <RadioButton
             android:id="@+id/paidBtn"
             android:layout_width="135dp"
-            android:layout_height="84dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="#1a1d1e"
             android:buttonTint="#FFFFFF"
@@ -46,26 +48,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginStart="40dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="20dp"
-        android:layout_marginEnd="40dp"
+        android:layout_marginEnd="20dp"
         android:background="#1a1d1e"
         android:linksClickable="true"
-        android:paddingTop="20dp"
-        android:paddingBottom="20dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:text="@string/linktofree"
         android:textColor="#FFFFFF"
         android:textSize="20sp"
         android:visibility="visible" />
 
 
-
     <ScrollView
         android:id="@+id/paidScroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginStart="40dp"
-        android:layout_marginEnd="40dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:layout_weight="1"
         android:visibility="gone">
 
@@ -74,15 +75,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
             <RadioGroup
                 android:id="@+id/templateGroup"
-                android:layout_width="332dp"
-                android:layout_height="24dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginStart="40dp"
-                android:layout_marginEnd="40dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="20dp"
                 android:background="#1a1d1e"
                 android:orientation="horizontal"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:visibility="visible"
                 android:weightSum="2">
 
@@ -107,6 +111,7 @@
                     android:text="@string/devkit"
                     android:textColor="#FFFFFF" />
             </RadioGroup>
+
             <TextView
                 android:id="@+id/tenantSpinnerLabel"
                 android:layout_width="wrap_content"
@@ -229,5 +234,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center|end"
         android:layout_marginTop="10dp"
-        android:text="@string/create" />
+        android:text="@string/create"
+        android:visibility="gone" />
 </LinearLayout>

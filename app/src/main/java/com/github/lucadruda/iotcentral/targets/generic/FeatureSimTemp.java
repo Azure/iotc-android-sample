@@ -1,4 +1,4 @@
-package com.github.lucadruda.iotcentral.targets.ST;
+package com.github.lucadruda.iotcentral.targets.generic;
 
 import com.github.lucadruda.iotcentral.targets.Feature;
 
@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 
-public class FeatureTemperature extends Feature {
-    public FeatureTemperature(String name, String id) {
+public class FeatureSimTemp extends Feature {
+    public FeatureSimTemp(String name, String id) {
         super(name, id);
     }
 

@@ -19,6 +19,10 @@ public class Feature {
         if (data.length == 1) {
             return (float) (buffer.get(0) & 0xFF);
         }
+        if (data.length == 5) {
+            buffer = ByteBuffer.wrap(data, 3, 1).order(ByteOrder.LITTLE_ENDIAN);
+            return (float) (buffer.get(0) & 0xFF);
+        }
         return buffer.getShort();
     }
 
@@ -32,7 +36,7 @@ public class Feature {
 
     public boolean lookup(String uuid) {
         String prefix = uuid.substring(0, 13);
-        if (getId().equals(prefix)) {
+        if (getId().equalsIgnoreCase(prefix)) {
             return true;
         }
         return false;

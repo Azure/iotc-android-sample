@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.adapters.AppAdapter;
 import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
+import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
 import com.github.lucadruda.iotcentral.service.exceptions.DataException;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private ExpandableGrid gridView;
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
+    private ARMClient armClient;
 
     private LoadingAlert appLoadingAlert;
 
@@ -131,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
      * Use ADAL to get an Access token for IoTCentral
      */
     private void onLoginClicked() {
-        Authentication.getToken(authContext, Constants.IOTC_TOKEN_AUDIENCE, getAuthCallback());
+        Authentication.getToken(authContext, Constants.IOTC_TOKEN_AUDIENCE, getIoTCAuthCallback());
     }
 
 
@@ -202,7 +204,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private TokenCallback getAuthCallback() {
+    private TokenCallback getIoTCAuthCallback() {
+        return new TokenCallback() {
+            @Override
+            public void onSuccess(String token, final String userName) {
+                try {
+                    if (token != null && token.length() > 0) {
+                        iotcDataClient = IoTCentral.createDataClient(token);
+
+                        Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getARMCAuthCallback());
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            @Override
+            public void onError(String errorMsg) {
+
+            }
+        };
+    }
+
+    private TokenCallback getARMCAuthCallback() {
         return new TokenCallback() {
             @Override
             public void onSuccess(String token, final String userName) {
@@ -225,7 +256,7 @@ public class MainActivity extends AppCompatActivity {
         });
         try {
             if (token != null && token.length() > 0) {
-                iotcDataClient = IoTCentral.createDataClient(token);
+                armClient = IoTCentral.createARMClient(token);
             }
             apps = iotcDataClient.listApps();
 

@@ -31,7 +31,7 @@ public abstract class Target {
     public boolean lookup(String uuid) {
         String suffix = uuid.substring(14);
         for (String serviceSuffix : servicesSuffixes()) {
-            if (serviceSuffix.equals(suffix)) {
+            if (serviceSuffix.equalsIgnoreCase(suffix)) {
                 return true;
             }
         }

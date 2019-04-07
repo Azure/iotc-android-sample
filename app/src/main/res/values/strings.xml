@@ -34,6 +34,7 @@
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
+    <string name="read">Read</string>
 
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>

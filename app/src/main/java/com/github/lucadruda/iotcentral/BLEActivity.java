@@ -1,16 +1,22 @@
 package com.github.lucadruda.iotcentral;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Trace;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -36,6 +42,7 @@ import com.github.lucadruda.iotcentral.targets.Targets;
 
 import java.util.HashMap;
 import java.util.Random;
+import java.util.UUID;
 
 public class BLEActivity extends AppCompatActivity {
 
@@ -49,9 +56,12 @@ public class BLEActivity extends AppCompatActivity {
     private DeviceService deviceService;
     private MappingStorage storage;
     private Button connectBtn;
+    private Button readBtn;
     private LoadingAlert gattLoader, iotcLoader;
     private TextView logView;
     private TraceManager traceManager;
+    private EditText deviceNameEditor;
+    private boolean deviceExists;
 
     private final ServiceConnection bleServiceConnection = new ServiceConnection() {
         @Override
@@ -90,15 +100,24 @@ public class BLEActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ble_service);
+        deviceExists = getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false);
         deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
         deviceAddress = getIntent().getStringExtra(Constants.DEVICE_ADDRESS);
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
-        ((EditText) findViewById(R.id.deviceId)).setText(deviceName);
+        deviceNameEditor = findViewById(R.id.deviceId);
+        deviceNameEditor.setText(deviceName);
         if (getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false)) {
-            ((EditText) findViewById(R.id.deviceId)).setEnabled(false);
+            deviceNameEditor.setEnabled(false);
         }
         connectBtn = findViewById(R.id.connectBLE);
         connectBtn.setOnClickListener(onConnectButtonClick());
+        readBtn = findViewById(R.id.readBLE);
+        readBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                initTelemetry();
+            }
+        });
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
         templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
         serviceList = findViewById(R.id.gatt_services_list);
@@ -168,7 +187,7 @@ public class BLEActivity extends AppCompatActivity {
             super.onBackPressed();
         } else {
             serviceList.setVisibility(View.VISIBLE);
-            logView.setVisibility(View.GONE);
+            findViewById(R.id.logScroll).setVisibility(View.GONE);
         }
     }
 
@@ -211,10 +230,11 @@ public class BLEActivity extends AppCompatActivity {
                 if (Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE.equals(action)) {
                     iotcLoader.stop();
                     if (intent.getStringExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS).equals(IOTC_CONNECTION_STATE.CONNECTION_OK.toString())) {
-                        storage.setDeviceId(intent.getStringExtra(MappingStorage.DEVICE_ID));
+                        storage.setDeviceId(deviceNameEditor.getText().toString());
                         storage.commit();
                         serviceList.setVisibility(View.GONE);
-                        logView.setVisibility(View.VISIBLE);
+                        findViewById(R.id.logScroll).setVisibility(View.VISIBLE);
+                        readBtn.setVisibility(View.VISIBLE);
                         initTelemetry();
                         findViewById(R.id.iconOK).setVisibility(View.VISIBLE);
                         findViewById(R.id.iconFAIL).setVisibility(View.GONE);
@@ -225,11 +245,13 @@ public class BLEActivity extends AppCompatActivity {
                     } else {
                         findViewById(R.id.iconFAIL).setVisibility(View.VISIBLE);
                         findViewById(R.id.iconOK).setVisibility(View.GONE);
-
+                        readBtn.setVisibility(View.GONE);
                         findViewById(R.id.disconnectBLE).setVisibility(View.GONE);
                         findViewById(R.id.connectBLE).setVisibility(View.VISIBLE);
                     }
                 }
+            } else if (Constants.IOTCENTRAL_COMMAND_RECEIVED.equals(action)) {
+                onCommandReceived(intent.getStringExtra(Constants.IOTCENTRAL_COMMAND_TEXT));
             }
         }
     };
@@ -242,6 +264,7 @@ public class BLEActivity extends AppCompatActivity {
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
         intentFilter.addAction(BLEService.TELEMETRY_ASSIGNED);
         intentFilter.addAction(Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE);
+        intentFilter.addAction(Constants.IOTCENTRAL_COMMAND_RECEIVED);
         return intentFilter;
     }
 
@@ -268,7 +291,7 @@ public class BLEActivity extends AppCompatActivity {
     private void connectIoTCService() {
         if (deviceService == null) {
             Intent iotcServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
-            iotcServiceIntent.putExtra(Constants.DEVICE_NAME, deviceName);
+            iotcServiceIntent.putExtra(Constants.DEVICE_NAME, deviceNameEditor.getText().toString());
             iotcServiceIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
             iotcServiceIntent.putExtra(Constants.APPLICATION, application);
             iotcServiceIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
@@ -278,8 +301,7 @@ public class BLEActivity extends AppCompatActivity {
                 startService(iotcServiceIntent);
             }
             bindService(iotcServiceIntent, iotcServiceConnection, BIND_AUTO_CREATE);
-        }
-        else{
+        } else {
             deviceService.initialize();
         }
     }
@@ -302,7 +324,30 @@ public class BLEActivity extends AppCompatActivity {
         Feature feature = Targets.featureslookup(new GattPair(gattKey).getCharacteristicUUID().toString());
         // parse value
         // deviceService.sendTelemetry(iotcField, data.toString());
-        traceManager.trace("Sending " + iotcField + " telemetry");
-        deviceService.sendTelemetry(iotcField, "" + feature.getData(data));
+        float val = feature.getData(data);
+        traceManager.trace("Sending " + iotcField + " = " + val);
+        deviceService.sendTelemetry(iotcField, "" + val);
+    }
+
+    private void onCommandReceived(String text) {
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("default",
+                    "COMMAND_CHANNEL",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("COMMAND_DESCRIPTOR");
+            mNotificationManager.createNotificationChannel(channel);
+        }
+        Bitmap bm = BitmapFactory.decodeResource(getResources(), R.drawable.ic_cloud_circle_black_24dp);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext(), "default")
+                .setSmallIcon(R.drawable.ic_cloud_circle_black_24dp) // notification icon
+                .setLargeIcon(bm) // notification icon
+                .setContentTitle("Azure IoTCentral") // title for notification
+                .setContentText(text)// message for notification
+                .setAutoCancel(true); // clear notification after click
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+        notificationManager.notify(new Random().nextInt(100), mBuilder.build());
     }
 }

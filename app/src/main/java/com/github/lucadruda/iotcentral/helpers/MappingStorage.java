@@ -60,7 +60,7 @@ public class MappingStorage {
 
     public String getGattUUID(String iotcTelemetry) {
         for (String key : this.cache.keySet()) {
-            if (this.cache.get(key).equals(iotcTelemetry)) {
+            if (this.cache.get(key).equalsIgnoreCase(iotcTelemetry)) {
                 return key;
             }
         }

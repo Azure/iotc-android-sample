@@ -17,7 +17,17 @@ public class LoadingAlert {
         //builder.setCancelable(false);
     }
 
+    public LoadingAlert(Context context, String text, boolean cancelable) {
+        this(context, text);
+        builder.setCancelable(cancelable);
+    }
+
     public void start() {
+        loadingAlert = builder.show();
+    }
+
+    public void start(String text) {
+        builder.setMessage(text);
         loadingAlert = builder.show();
     }
 

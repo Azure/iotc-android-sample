@@ -16,10 +16,12 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.widget.RadioButton;
 import android.widget.Toast;
 
+import com.github.lucadruda.iotc.device.Command;
 import com.github.lucadruda.iotc.device.IoTCClient;
 import com.github.lucadruda.iotc.device.callbacks.IoTCCallback;
 import com.github.lucadruda.iotc.device.enums.IOTC_CONNECT;
 import com.github.lucadruda.iotc.device.enums.IOTC_CONNECTION_STATE;
+import com.github.lucadruda.iotc.device.enums.IOTC_EVENTS;
 import com.github.lucadruda.iotc.device.exceptions.IoTCentralException;
 import com.github.lucadruda.iotcentral.Constants;
 import com.github.lucadruda.iotcentral.IoTCentral;
@@ -31,6 +33,9 @@ import com.github.lucadruda.iotcentral.service.DataClient;
 import com.github.lucadruda.iotcentral.service.Device;
 import com.github.lucadruda.iotcentral.service.DeviceCredentials;
 import com.github.lucadruda.iotcentral.service.exceptions.DataException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 
@@ -45,6 +50,7 @@ public class DeviceService extends Service {
     private LocalBroadcastManager broadcastManager;
     private DataClient iotcentral;
     private Intent connChangedIntent;
+    private Intent cmdReceivedIntent;
     private Device device;
 
 
@@ -76,6 +82,7 @@ public class DeviceService extends Service {
         application = (Application) intent.getSerializableExtra(Constants.APPLICATION);
         modelId = intent.getStringExtra(Constants.DEVICE_TEMPLATE_ID);
         connChangedIntent = new Intent(Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE);
+        cmdReceivedIntent = new Intent(Constants.IOTCENTRAL_COMMAND_RECEIVED);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             initChannels(this);
             Notification.Builder builder = new Notification.Builder(this, "default")
@@ -152,6 +159,7 @@ public class DeviceService extends Service {
             public void run() {
                 try {
                     iotcClient.Connect();
+                    iotcClient.on(IOTC_EVENTS.Command, handleCommand());
                     connChangedIntent.putExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS, IOTC_CONNECTION_STATE.CONNECTION_OK.toString());
                     connChangedIntent.putExtra(MappingStorage.DEVICE_ID, device.getDeviceId());
                     broadcastManager.sendBroadcast(connChangedIntent);
@@ -187,6 +195,27 @@ public class DeviceService extends Service {
 
     public void sendTelemetry(String key, String value) {
         iotcClient.SendTelemetry(String.format("{\"%s\":\"%s\"}", key, value), null);
+    }
+
+    private IoTCCallback handleCommand() {
+        return new IoTCCallback() {
+            @Override
+            public void Exec(Object result) {
+                Command cmd = null;
+                if (result instanceof Command) {
+                    cmd = (Command) result;
+                }
+                try {
+                    JsonParser parser = new JsonParser();
+                    int vers = ((JsonObject) parser.parse(cmd.getPayload())).get("vers").getAsInt();
+                    cmdReceivedIntent.putExtra(Constants.IOTCENTRAL_COMMAND_TEXT, "A new firmware is available. Version: " + vers);
+                    broadcastManager.sendBroadcast(cmdReceivedIntent);
+                    iotcClient.SendProperty(cmd.getResponseObject("Command received by " + deviceName), null);
+                } catch (IoTCentralException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
     }
 
 
