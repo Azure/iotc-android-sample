@@ -8,18 +8,19 @@ import android.os.Bundle;
 
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.lucadruda.iotcentral.adapters.AppAdapter;
+import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
+import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
+import com.github.lucadruda.iotcentral.service.exceptions.DataException;
 import com.microsoft.aad.adal.AuthenticationContext;
 
 
@@ -44,13 +45,17 @@ public class MainActivity extends AppCompatActivity {
     private ExpandableGrid gridView;
     private FloatingActionButton newAppBtn;
     private DataClient iotcDataClient;
+    private ARMClient armClient;
+
+    private LoadingAlert appLoadingAlert;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         authContext = Authentication.create(getActivity(), this);
-
+        appLoadingAlert = new LoadingAlert(this, "Loading applications");
 
         loginButton = (Button) findViewById(R.id.login);
         signOutButton = (Button) findViewById(R.id.logout);
@@ -91,6 +96,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        loginButton.callOnClick();
+/*        if (BuildConfig.DEBUG) {
+            final String iotctoken = getResources().getString(R.string.auth);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    getAuthCallback().onSuccess(iotctoken, "Luca");
+                }
+            }).start();
+        }*/
     }
 
     //
@@ -117,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
      * Use ADAL to get an Access token for IoTCentral
      */
     private void onLoginClicked() {
-        Authentication.getToken(authContext, Constants.IOTC_TOKEN_AUDIENCE, getAuthCallback());
+        Authentication.getToken(authContext, Constants.IOTC_TOKEN_AUDIENCE, getIoTCAuthCallback());
     }
 
 
@@ -157,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                         .findViewById(R.id.grid_item_label);
                 textView.setText(apps[position].getName());
                 Intent appIntent = new Intent(getActivity(), ApplicationActivity.class);
-                appIntent.putExtra("app", apps[position]);
+                appIntent.putExtra(Constants.APPLICATION, apps[position]);
                 startActivity(appIntent);
                 Toast.makeText(getApplicationContext(),
                         textView.getText(), Toast.LENGTH_SHORT).show();
@@ -188,7 +204,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private TokenCallback getAuthCallback() {
+    private TokenCallback getIoTCAuthCallback() {
+        return new TokenCallback() {
+            @Override
+            public void onSuccess(String token, final String userName) {
+                try {
+                    if (token != null && token.length() > 0) {
+                        iotcDataClient = IoTCentral.createDataClient(token);
+
+                        Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getARMCAuthCallback());
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+            @Override
+            public void onError(String errorMsg) {
+
+            }
+        };
+    }
+
+    private TokenCallback getARMCAuthCallback() {
         return new TokenCallback() {
             @Override
             public void onSuccess(String token, final String userName) {
@@ -203,9 +248,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateApps(String token, final String userName) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                appLoadingAlert.start();
+            }
+        });
         try {
             if (token != null && token.length() > 0) {
-                iotcDataClient = IoTCentral.createDataClient(token);
+                armClient = IoTCentral.createARMClient(token);
             }
             apps = iotcDataClient.listApps();
 
@@ -219,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    appLoadingAlert.stop();
                     updateSuccessUI(text, userName);
                 }
             });
@@ -230,7 +282,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (DataException e) {
+            e.printStackTrace();
         }
+
     }
 
 }

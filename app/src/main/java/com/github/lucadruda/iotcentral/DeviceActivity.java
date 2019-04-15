@@ -1,16 +1,17 @@
 package com.github.lucadruda.iotcentral;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.text.InputType;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.view.View;
 
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -20,125 +21,75 @@ import android.widget.Toast;
 import com.github.lucadruda.iotc.device.IoTCClient;
 import com.github.lucadruda.iotc.device.enums.IOTC_CONNECT;
 import com.github.lucadruda.iotc.device.exceptions.IoTCentralException;
+import com.github.lucadruda.iotcentral.adapters.IoTCAdapter;
+import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.Device;
 import com.github.lucadruda.iotcentral.service.DeviceCredentials;
+import com.github.lucadruda.iotcentral.service.exceptions.DataException;
+import com.github.lucadruda.iotcentral.service.types.DeviceTemplate;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class DeviceActivity extends Activity {
+public class DeviceActivity extends AppCompatActivity {
 
     private Application application;
     private String templateId;
-    private RadioGroup deviceGroup;
-    private RadioButton[] devicesRadio;
-    private Button newBtn;
-    private Button connectBtn;
-    private ArrayList<Device> devices;
-    private String newDeviceId;
-    private DeviceCredentials credentials;
+    private Device[] devices;
+    private RecyclerView devicesView;
+    private LoadingAlert templateLoader;
+    private Button newDeviceBtn;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.device_activity);
-        application = (Application) getIntent().getSerializableExtra("app");
-        templateId = (String) getIntent().getSerializableExtra("templateId");
-
-        deviceGroup = (RadioGroup) findViewById(R.id.devicesGroup);
-        newBtn = (Button) findViewById(R.id.addDevice);
-        newBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle("Add new device");
-                final EditText input = new EditText(getActivity());
-                input.setInputType(InputType.TYPE_CLASS_TEXT);
-                builder.setView(input);
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        newDeviceId = input.getText().toString();
-                        createThread.start();
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                builder.show();
-            }
-        });
-        connectBtn = (Button) findViewById(R.id.connectBtn);
-        connectBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String deviceId = ((RadioButton) deviceGroup.findViewById(deviceGroup.getCheckedRadioButtonId())).getHint().toString();
-                final IoTCClient
-                        iotcclient = new IoTCClient(deviceId, credentials.getIdScope(), IOTC_CONNECT.SYMM_KEY, credentials.getPrimaryKey());
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            iotcclient.Connect();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Toast.makeText(
-                                            getApplicationContext(), "Connected!", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        } catch (IoTCentralException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-            }
-        });
-        devThread.start();
+        setContentView(R.layout.list_layout);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
+        getSupportActionBar().setTitle(application.getName());
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        devicesView = findViewById(R.id.listView);
+        devicesView.setHasFixedSize(true);
+        devicesView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        templateLoader = new LoadingAlert(this, "Loading devices");
+        templateLoader.start();
+        ((TextView) findViewById(R.id.listTitle)).setText("Devices");
+        newDeviceBtn = findViewById(R.id.serviceButton);
+        newDeviceBtn.setText(R.string.create_device);
+        newDeviceBtn.setVisibility(View.VISIBLE);
+        newDeviceBtn.setOnClickListener(getOnClickListener(false));
+        iotcThread.start();
 
     }
 
-    Thread devThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            try {
-                credentials = IoTCentral.getDataClient().getCredentials(application.getId());
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
 
-                devices = new ArrayList<Device>(Arrays.asList(IoTCentral.getDataClient().listDevices(application.getId(), templateId)));
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateDevices();
-                    }
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-    });
+        return true;
+    }
 
-    Thread createThread = new Thread(new Runnable() {
+    Thread iotcThread = new Thread(new Runnable() {
         @Override
         public void run() {
             try {
-                Device newDevice = IoTCentral.getDataClient().createDevice(application.getId(), newDeviceId, templateId);
-                devices.add(newDevice);
+                devices = IoTCentral.getDataClient().listDevices(application.getId(), templateId);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        updateDevices();
+                        IoTCAdapter dataAdapter = new IoTCAdapter(getActivity(), devices, getOnClickListener(true));
+                        devicesView.setAdapter(dataAdapter);
+                        templateLoader.stop();
                     }
                 });
-            } catch (IOException e) {
+            } catch (DataException e) {
                 e.printStackTrace();
             }
         }
@@ -148,32 +99,24 @@ public class DeviceActivity extends Activity {
         return this;
     }
 
-    private void updateDevices() {
-        ColorStateList colorStateList = new ColorStateList(
-                new int[][]{
-
-                        new int[]{-android.R.attr.state_enabled}, //disabled
-                        new int[]{android.R.attr.state_enabled} //enabled
-                },
-                new int[]{
-
-                        Color.WHITE //disabled
-                        , Color.BLUE //enabled
-
+    private View.OnClickListener getOnClickListener(final boolean exists) {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent appIntent = new Intent(getActivity(), DeviceScanActivity.class);
+                appIntent.putExtra(Constants.APPLICATION, application);
+                appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
+                if (exists) {
+                    final Device device = (Device) v.getTag();
+                    if (device == null) {
+                        return;
+                    }
+                    appIntent.putExtra(Constants.DEVICE_NAME, device.getDeviceId());
+                    appIntent.putExtra(Constants.DEVICE_EXISTS, true);
                 }
-        );
-        devicesRadio = new RadioButton[devices.size()];
-        deviceGroup.removeAllViews();
-        for (int i = 0; i < devices.size(); i++) {
-            devicesRadio[i] = new RadioButton(getActivity());
-            devicesRadio[i].setId(devicesRadio[i].hashCode());
-            devicesRadio[i].setText(devices.get(i).getName());
-            devicesRadio[i].setHint(devices.get(i).getDeviceId());
-            devicesRadio[i].setTextColor(Color.WHITE);
-            devicesRadio[i].setButtonTintList(colorStateList);//set the color tint list
-            devicesRadio[i].invalidate(); //could not be necessary
-            deviceGroup.addView(devicesRadio[i]);
-        }
-        deviceGroup.invalidate();
+                startActivity(appIntent);
+            }
+        };
+
     }
 }

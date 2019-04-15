@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:layout_marginTop="20dp"
+    android:background="@drawable/border"
+    android:elevation="6dp"
+    android:padding="6dip">
+
+    <TextView
+        android:id="@+id/text1"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:singleLine="false"
+        android:textAlignment="gravity"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+
+</FrameLayout>

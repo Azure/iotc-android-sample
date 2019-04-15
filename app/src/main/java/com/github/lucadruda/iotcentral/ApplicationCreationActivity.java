@@ -7,36 +7,34 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
+import com.github.lucadruda.iotcentral.helpers.NotificationAlert;
 import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
-import com.github.lucadruda.iotcentral.service.DataClient;
-import com.github.lucadruda.iotcentral.service.User;
+import com.github.lucadruda.iotcentral.service.exceptions.DataException;
+import com.github.lucadruda.iotcentral.service.templates.ContosoTemplate;
+import com.github.lucadruda.iotcentral.service.templates.DevKitTemplate;
+import com.github.lucadruda.iotcentral.service.templates.IoTCTemplate;
 import com.github.lucadruda.iotcentral.service.types.ResourceGroup;
 import com.github.lucadruda.iotcentral.service.types.Subscription;
 import com.github.lucadruda.iotcentral.service.types.Tenant;
 import com.microsoft.aad.adal.AuthenticationContext;
-import com.microsoft.aad.adal.AuthenticationResult;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 
 import java.io.IOException;
@@ -63,11 +61,17 @@ public class ApplicationCreationActivity extends AppCompatActivity {
 
     private Button createBtn;
 
-    private AlertDialog loadingAlert;
+    private LoadingAlert loadingAlert;
     private String refreshToken;
     private boolean authenticated = false;
     private AuthenticationContext authContext;
+    private IoTCTemplate ioTCTemplate;
 
+    private ArrayAdapter<ResourceGroup> rgAdapter;
+    private ArrayAdapter<Tenant> tenantAdapter;
+    private ArrayAdapter<Subscription> subscriptionsAdapter;
+
+    private final String EMPTY_TENANT = "empty_tenant";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -81,7 +85,9 @@ public class ApplicationCreationActivity extends AppCompatActivity {
         appType = findViewById(R.id.appTypeGroup);
         createBtn = findViewById(R.id.createAppBtn);
         regionSpinner = findViewById(R.id.regionSpinner);
-        regionSpinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item, getResources().getStringArray(R.array.ARMRegions)) {
+        ioTCTemplate = new ContosoTemplate();
+        loadingAlert = new LoadingAlert(this, "");
+        regionSpinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.ARMRegions)) {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
@@ -101,19 +107,34 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 RadioButton radioBtn = group.findViewById(radioBtnID);
                 if (radioBtn.getId() == R.id.paidBtn) {
                     if (!authenticated) {
-                        startLoader(getActivity());
+                        loadingAlert.start();
                         authContext = Authentication.create(getActivity(), getApplicationContext());
                         Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getArmCallback());
                     }
                     findViewById(R.id.linkText).setVisibility(View.GONE);
                     findViewById(R.id.paidScroll).setVisibility(View.VISIBLE);
+                    createBtn.setVisibility(View.VISIBLE);
                 } else {
                     findViewById(R.id.linkText).setVisibility(View.VISIBLE);
                     findViewById(R.id.paidScroll).setVisibility(View.GONE);
+                    createBtn.setVisibility(View.GONE);
+
                 }
             }
         });
 
+        ((RadioGroup) findViewById(R.id.templateGroup)).setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                int radioBtnID = group.getCheckedRadioButtonId();
+
+                RadioButton radioBtn = group.findViewById(radioBtnID);
+                if (radioBtn.getId() == R.id.contosoBtn) {
+                    ioTCTemplate = new ContosoTemplate();
+                } else {
+                    ioTCTemplate = new DevKitTemplate();
+                }
+            }
+        });
         tenantSpinner.setPrompt("Select tenant");
 
         tenantSpinner.setOnItemSelectedListener(getTenenatSelection());
@@ -131,7 +152,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 layout.setOrientation(LinearLayout.VERTICAL);
 
                 final Spinner spinner = new Spinner(getApplicationContext());
-                spinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), R.layout.spinner_item, getResources().getStringArray(R.array.ARMRegions)));
+                spinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.ARMRegions)));
                 layout.addView(input);
                 layout.addView(spinner);
                 layout.setPadding(50, 40, 50, 10);
@@ -168,31 +189,38 @@ public class ApplicationCreationActivity extends AppCompatActivity {
         createBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    if (region == null || region.length() == 0) {
-                        region = String.valueOf(regionSpinner.getSelectedItem());
+                loadingAlert.start("Creating application " + appNameText.getText().toString());
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (region == null || region.length() == 0) {
+                                region = String.valueOf(regionSpinner.getSelectedItem());
+                            }
+                            if (resourceGroup == null || resourceGroup.length() == 0) {
+                                resourceGroup = String.valueOf(resourceGroupsSpinner.getSelectedItem());
+                            }
+                            ARMClient iotc = IoTCentral.getArmClient();
+                            iotc.setSubscription((Subscription) subscriptionsSpinner.getSelectedItem());
+                            Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), ioTCTemplate);
+                            iotc.setResourceGroup(resourceGroup);
+                            iotc.createApplication(application);
+                            loadingAlert.stop();
+                            finish();
+                            setResult(10);
+                        } catch (IOException e) {
+                            Toast.makeText(getApplicationContext(), "Application can't be created. Check errors on the Azure portal for more details", Toast.LENGTH_LONG).show();
+                        }
                     }
-                    if (resourceGroup == null || resourceGroup.length() == 0) {
-                        resourceGroup = String.valueOf(resourceGroupsSpinner.getSelectedItem());
-                    }
-                    ARMClient iotc = IoTCentral.getArmClient();
-                    Application application = new Application(appNameText.getText().toString(), appNameText.getText().toString(), urlText.getText().toString(), Region.findByLabelOrName(region).name(), "iotc-default@1.0.0");
-                    startLoader(getActivity());
-                    iotc.setResourceGroup(resourceGroup);
-                    iotc.createApplication(application);
-                    stopLoader();
-                    finish();
-                    setResult(10);
-                } catch (IOException e) {
-                    Toast.makeText(getApplicationContext(), "Application can't be created. Check errors on the Azure portal for more details", Toast.LENGTH_LONG).show();
-                }
+                }).start();
+
             }
         });
 
     }
 
 
-    private TokenCallback getSubscriptionsCallback() {
+    private TokenCallback getSubscriptionsCallback(final int currentTenantPosition) {
         return new TokenCallback() {
             @Override
             public void onSuccess(String token, final String userName) {
@@ -201,11 +229,10 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                     try {
                         subscriptions = armClient.listSubscriptions();
                         if (subscriptions.length == 0) {
+                            loadingAlert.stop();
+                            new NotificationAlert(getActivity(), getResources().getString(getResources().getIdentifier(EMPTY_TENANT, "string", getPackageName()))).show();
+                            tenantSpinner.setSelection(currentTenantPosition, true);
                             return;
-                        }
-                        final String[] subs = new String[subscriptions.length];
-                        for (int i = 0; i < subscriptions.length; i++) {
-                            subs[i] = subscriptions[i].getDisplayName();
                         }
                         // set first subscription as default and populate resourcegroups
                         armClient.setSubscription(subscriptions[0].getSubscriptionId());
@@ -213,20 +240,13 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ArrayAdapter<String> subscriptionsAdapter = new ArrayAdapter<String>(getActivity(), R.layout.spinner_item, subs) {
-                                    @Override
-                                    public View getView(int position, View convertView, ViewGroup parent) {
-                                        TextView textView = (TextView) super.getView(position, convertView, parent);
-                                        textView.setTextColor(Color.WHITE);
-                                        return textView;
-                                    }
-                                };
+                                subscriptionsAdapter = new ArrayAdapter<Subscription>(getActivity(), android.R.layout.simple_spinner_item, subscriptions);
                                 subscriptionsSpinner.setAdapter(subscriptionsAdapter);
-                                stopLoader();
+                                loadingAlert.stop();
                             }
                         });
 
-                    } catch (IOException e) {
+                    } catch (DataException e) {
                         e.printStackTrace();
                     }
                 } catch (InterruptedException e) {
@@ -257,28 +277,16 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                     ARMClient armClient = IoTCentral.createARMClient(token);
                     try {
                         tenants = armClient.listTenants();
-                        final String[] names = new String[tenants.length];
-                        for (int i = 0; i < tenants.length; i++) {
-                            names[i] = tenants[i].getDisplayName();
-                        }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ArrayAdapter<String> tenantAdapter = new ArrayAdapter<String>(getActivity(), R.layout.spinner_item, names) {
-                                    @Override
-                                    public View getView(int position, View convertView, ViewGroup parent) {
-                                        TextView textView = (TextView) super.getView(position, convertView, parent);
-                                        textView.setTextColor(Color.WHITE);
-                                        return textView;
-                                    }
-
-                                };
-                                stopLoader();
+                                tenantAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, tenants);
+                                loadingAlert.stop();
                                 tenantSpinner.setAdapter(tenantAdapter);
 
                             }
                         });
-                    } catch (IOException e) {
+                    } catch (DataException e) {
                         e.printStackTrace();
                     }
                 } catch (InterruptedException e) {
@@ -307,9 +315,9 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 if (!authenticated) {
                     return;
                 }
-                startLoader(getActivity());
+                loadingAlert.start();
                 authContext = Authentication.create(getActivity(), getApplicationContext(), Constants.AUTHORITY_BASE + tenants[position].getTenantId());
-                Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getSubscriptionsCallback());
+                Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getSubscriptionsCallback(position));
 
             }
 
@@ -346,26 +354,16 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 try {
                     resourceGroups = IoTCentral.getArmClient().listResourceGroups(subscriptionId);
 
-                    final String[] rgs = new String[resourceGroups.length];
-                    for (int i = 0; i < resourceGroups.length; i++) {
-                        rgs[i] = resourceGroups[i].getName();
-                    }
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            ArrayAdapter<String> rgAdapter = new ArrayAdapter<String>(getActivity(), R.layout.spinner_item, rgs) {
-                                @Override
-                                public View getView(int position, View convertView, ViewGroup parent) {
-                                    TextView textView = (TextView) super.getView(position, convertView, parent);
-                                    textView.setTextColor(Color.WHITE);
-                                    return textView;
-                                }
-                            };
+                            rgAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_item, resourceGroups);
                             resourceGroupsSpinner.setAdapter(rgAdapter);
                         }
                     });
 
-                } catch (IOException e) {
+                } catch (DataException e) {
                     e.printStackTrace();
                 }
             }
@@ -373,27 +371,17 @@ public class ApplicationCreationActivity extends AppCompatActivity {
 
     }
 
+    private void clearAll() {
+        if (rgAdapter != null) {
+            rgAdapter.clear();
+        }
+        if (subscriptionsAdapter != null) {
+            subscriptionsAdapter.clear();
+        }
+    }
 
     public Activity getActivity() {
         return this;
-    }
-
-    public void startLoader(final Context context) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-                builder.setView(R.layout.loading);
-                builder.setCancelable(false);
-                loadingAlert = builder.show();
-            }
-        });
-
-    }
-
-    public void stopLoader() {
-        loadingAlert.dismiss();
     }
 
     @Override
