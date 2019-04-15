@@ -71,7 +71,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
     private ArrayAdapter<Tenant> tenantAdapter;
     private ArrayAdapter<Subscription> subscriptionsAdapter;
 
-    private final String EMPTY_TENANT = "empty_tenat";
+    private final String EMPTY_TENANT = "empty_tenant";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
