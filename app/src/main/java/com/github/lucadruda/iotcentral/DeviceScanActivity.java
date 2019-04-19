@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,7 +31,7 @@ import com.github.lucadruda.iotcentral.service.Application;
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
-public class DeviceScanActivity extends AppCompatActivity {
+public class DeviceScanActivity extends BaseActivity {
     private BLEAdapter devicesAdapter;
     private BluetoothLeScanner bleScanner;
     private BluetoothAdapter bluetoothAdapter;
@@ -87,7 +88,7 @@ public class DeviceScanActivity extends AppCompatActivity {
         }
     }
 
-    @Override
+/*    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         if (!mScanning) {
@@ -101,9 +102,9 @@ public class DeviceScanActivity extends AppCompatActivity {
                     R.layout.actionbar_indeterminate_progress);
         }
         return true;
-    }
+    }*/
 
-    @Override
+/*    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_scan:
@@ -118,7 +119,7 @@ public class DeviceScanActivity extends AppCompatActivity {
 
         }
         return true;
-    }
+    }*/
 
     @Override
     protected void onResume() {
@@ -136,7 +137,14 @@ public class DeviceScanActivity extends AppCompatActivity {
         // Initializes list view adapter.
         devicesAdapter = new BLEAdapter(this, onDeviceClickListener);
         scannedView.setAdapter(devicesAdapter);
-        scanLeDevice(true);
+
+        try {
+            enableRefresh(getRefreshListener());
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+            finish();
+        }
+        refresh();
     }
 
     @Override
@@ -178,7 +186,7 @@ public class DeviceScanActivity extends AppCompatActivity {
                 public void run() {
                     mScanning = false;
                     bleScanner.stopScan(bleScanCallback);
-                    invalidateOptionsMenu();
+                    stopRefresh();
                 }
             }, SCAN_PERIOD);
 
@@ -188,7 +196,6 @@ public class DeviceScanActivity extends AppCompatActivity {
             mScanning = false;
             bleScanner.startScan(bleScanCallback);
         }
-        invalidateOptionsMenu();
     }
 
     // Device scan callback.
@@ -231,6 +238,7 @@ public class DeviceScanActivity extends AppCompatActivity {
             if (mScanning) {
                 bleScanner.stopScan(bleScanCallback);
                 mScanning = false;
+                stopRefresh();
             }
             startActivity(intent);
         }
@@ -245,5 +253,14 @@ public class DeviceScanActivity extends AppCompatActivity {
 
     public Activity getActivity() {
         return this;
+    }
+
+    private SwipeRefreshLayout.OnRefreshListener getRefreshListener() {
+        return new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                scanLeDevice(true);
+            }
+        };
     }
 }

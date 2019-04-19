@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutionException;
 
-public class ApplicationCreationActivity extends AppCompatActivity {
+public class ApplicationCreationActivity extends BaseActivity {
 
     private Spinner tenantSpinner;
     private Spinner subscriptionsSpinner;
@@ -61,8 +61,6 @@ public class ApplicationCreationActivity extends AppCompatActivity {
 
     private Button createBtn;
 
-    private LoadingAlert loadingAlert;
-    private String refreshToken;
     private boolean authenticated = false;
     private AuthenticationContext authContext;
     private IoTCTemplate ioTCTemplate;
@@ -86,7 +84,6 @@ public class ApplicationCreationActivity extends AppCompatActivity {
         createBtn = findViewById(R.id.createAppBtn);
         regionSpinner = findViewById(R.id.regionSpinner);
         ioTCTemplate = new ContosoTemplate();
-        loadingAlert = new LoadingAlert(this, "");
         regionSpinner.setAdapter(new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.ARMRegions)) {
 
             @Override
@@ -108,7 +105,7 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 if (radioBtn.getId() == R.id.paidBtn) {
                     if (!authenticated) {
                         loadingAlert.start();
-                        authContext = Authentication.create(getActivity(), getApplicationContext());
+                        authContext = Authentication.create(getActivity());
                         Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getArmCallback());
                     }
                     findViewById(R.id.linkText).setVisibility(View.GONE);
@@ -315,8 +312,8 @@ public class ApplicationCreationActivity extends AppCompatActivity {
                 if (!authenticated) {
                     return;
                 }
-                loadingAlert.start();
-                authContext = Authentication.create(getActivity(), getApplicationContext(), Constants.AUTHORITY_BASE + tenants[position].getTenantId());
+                loadingAlert.start("Getting subscriptions");
+                authContext = Authentication.create(getActivity(), Constants.AUTHORITY_BASE + tenants[position].getTenantId());
                 Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getSubscriptionsCallback(position));
 
             }

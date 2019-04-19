@@ -9,7 +9,6 @@ import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.github.lucadruda.iotcentral.service.Constants;
 import com.microsoft.aad.adal.ADALError;
 import com.microsoft.aad.adal.AuthenticationCallback;
 import com.microsoft.aad.adal.AuthenticationContext;
@@ -34,13 +33,11 @@ public class Authentication {
     /* Boolean variable to ensure invocation of interactive sign-in only once in case of multiple  acquireTokenSilent call failures */
     private static AtomicBoolean sIntSignInInvoked = new AtomicBoolean();
     /* Constant to send message to the mAcquireTokenHandler to do acquire token with Prompt.Auto*/
-    private static final int MSG_INTERACTIVE_SIGN_IN_PROMPT_AUTO = 1;
-    /* Constant to send message to the mAcquireTokenHandler to do acquire token with Prompt.Always */
-    private static final int MSG_INTERACTIVE_SIGN_IN_PROMPT_ALWAYS = 2;
 
     /* Constant to store user id in shared preferences */
-    private static final String USER_ID = "user_id";
     private static final String TAG = "ADALAUTH";
+
+    private static final String FORCE_PROMPT_AUTH = "FORCE_PROMPT_AUTH";
 
     /* Azure AD Constants */
     /* Authority is in the form of https://login.microsoftonline.com/yourtenant.onmicrosoft.com */
@@ -55,8 +52,7 @@ public class Authentication {
     private static ITokenCacheStore mainCache;
 
 
-    private static Context appContext;
-    private static Activity appActivity;
+    private static Activity appContext;
 
     public static UserInfo getUserInfo() {
         return userInfo;
@@ -88,15 +84,14 @@ public class Authentication {
         });
     }
 
-    public static AuthenticationContext create(final Activity activity, Context context) {
-        AuthenticationContext authContext = create(activity, context, AUTHORITY);
+    public static AuthenticationContext create(Activity context) {
+        AuthenticationContext authContext = create(context, AUTHORITY);
         mainCache = authContext.getCache();
         return authContext;
     }
 
-    public static AuthenticationContext create(final Activity activity, Context context, String authority) {
+    public static AuthenticationContext create(Activity context, String authority) {
         appContext = context;
-        appActivity = activity;
         if (mainCache != null) {
             return new AuthenticationContext(context, authority, true, mainCache);
         } else {
@@ -119,10 +114,14 @@ public class Authentication {
 
     public static void getToken(AuthenticationContext authContext, String
             resource, TokenCallback callback) {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
-        String userId = preferences.getString(USER_ID, "");
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext.getApplicationContext());
+        String userId = preferences.getString(Constants.USER_ID, "");
         if (!TextUtils.isEmpty(userId)) {
-            authContext.acquireTokenSilentAsync(resource, CLIENT_ID, userId, getAuthSilentCallback(authContext, resource, callback));
+            if (userId.equals(FORCE_PROMPT_AUTH)) {
+                getTokenWithPrompt(authContext, resource, PromptBehavior.Always, callback);
+
+            } else
+                authContext.acquireTokenSilentAsync(resource, CLIENT_ID, userId, getAuthSilentCallback(authContext, resource, callback));
         } else {
             getTokenWithPrompt(authContext, resource, PromptBehavior.Auto, callback);
         }
@@ -130,15 +129,20 @@ public class Authentication {
 
     public static void cleanCache(AuthenticationContext authContext) {
         authContext.getCache().removeAll();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext.getApplicationContext());
+        preferences.edit().putString(Constants.USER_ID, FORCE_PROMPT_AUTH).apply();
+        preferences.edit().putString(Constants.USER_NAME, "").apply();
+        preferences.edit().putString(Constants.USER_EMAIL, "").apply();
+
     }
 
 
     private static void getTokenWithPrompt(AuthenticationContext authContext, String
             resource, PromptBehavior behavior, TokenCallback callback) {
         if (behavior.equals(PromptBehavior.Auto)) {
-            authContext.acquireToken(appActivity, resource, CLIENT_ID, REDIRECT_URI, PromptBehavior.Auto, getAuthInteractiveCallback(authContext, resource, callback));
+            authContext.acquireToken(appContext, resource, CLIENT_ID, REDIRECT_URI, PromptBehavior.Auto, getAuthInteractiveCallback(authContext, resource, callback));
         } else {
-            authContext.acquireToken(appActivity, resource, CLIENT_ID, REDIRECT_URI, PromptBehavior.Always, getAuthInteractiveCallback(authContext, resource, callback));
+            authContext.acquireToken(appContext, resource, CLIENT_ID, REDIRECT_URI, PromptBehavior.Always, getAuthInteractiveCallback(authContext, resource, callback));
         }
     }
 
@@ -182,8 +186,10 @@ public class Authentication {
                 Log.d(TAG, "Resource: " + authenticationResult.getIsMultiResourceRefreshToken());
                 Log.d(TAG, "Token: " + authenticationResult.getAccessToken());
                 Log.d(TAG, "RToken: " + authenticationResult.getRefreshToken());
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
-                preferences.edit().putString(USER_ID, authenticationResult.getUserInfo().getUserId()).apply();
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext.getApplicationContext());
+                preferences.edit().putString(Constants.USER_ID, authenticationResult.getUserInfo().getUserId()).apply();
+                preferences.edit().putString(Constants.USER_NAME, authenticationResult.getUserInfo().getGivenName()).apply();
+                preferences.edit().putString(Constants.USER_EMAIL, authenticationResult.getUserInfo().getUserId()).apply();
                 sIntSignInInvoked.set(false);
                 userInfo = authenticationResult.getUserInfo();
                 callback.onSuccess(authenticationResult.getAccessToken(), authenticationResult.getUserInfo().getGivenName());
@@ -232,8 +238,10 @@ public class Authentication {
                     return;
                 }
                 /* Successfully got a token, call iotcentral now */
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appActivity);
-                preferences.edit().putString(USER_ID, authenticationResult.getUserInfo().getUserId()).apply();
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(appContext.getApplicationContext());
+                preferences.edit().putString(Constants.USER_ID, authenticationResult.getUserInfo().getUserId()).apply();
+                preferences.edit().putString(Constants.USER_NAME, authenticationResult.getUserInfo().getGivenName()).apply();
+                preferences.edit().putString(Constants.USER_EMAIL, authenticationResult.getUserInfo().getUserId()).apply();
                 Log.d(TAG, "Authority: " + authenticationResult.getAuthority());
                 Log.d(TAG, "Resource: " + authenticationResult.getIsMultiResourceRefreshToken());
                 Log.d(TAG, "Token: " + authenticationResult.getAccessToken());

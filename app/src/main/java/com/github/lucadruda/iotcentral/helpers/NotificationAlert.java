@@ -12,8 +12,12 @@ public class NotificationAlert {
     private AlertDialog notificationAlert;
 
     public NotificationAlert(Context context, String text) {
-        builder = new AlertDialog.Builder(context);
+        this(context);
         builder.setMessage(text);
+    }
+
+    public NotificationAlert(Context context) {
+        builder = new AlertDialog.Builder(context);
         builder.setCancelable(false);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -25,6 +29,11 @@ public class NotificationAlert {
 
     public void show() {
         notificationAlert = builder.show();
+    }
+
+    public void show(String message) {
+        builder.setMessage(message);
+        this.show();
     }
 
 }

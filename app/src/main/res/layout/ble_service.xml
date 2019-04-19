@@ -108,15 +108,14 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center|end"
-        android:layout_marginStart="200dp"
+        android:gravity="end"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/readBLE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
+            android:layout_gravity="center|end"
             android:text="@string/read"
             android:visibility="gone" />
 
@@ -125,7 +124,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:enabled="false"
-            android:text="@string/connect" />
+            android:text="@string/connect"
+            android:visibility="visible" />
 
         <Button
             android:id="@+id/disconnectBLE"
@@ -134,5 +134,6 @@
             android:layout_gravity="center|end"
             android:text="@string/menu_disconnect"
             android:visibility="gone" />
+
     </LinearLayout>
 </LinearLayout>

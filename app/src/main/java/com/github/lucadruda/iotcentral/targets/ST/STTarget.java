@@ -20,6 +20,7 @@ public class STTarget extends Target {
     protected HashMap<String, Feature> setFeatures() {
         return new HashMap<String, Feature>() {{
             put("00010000-0001", new FeatureTemperature("Temperature", "00010000-0001"));
+            put("00000040-0001", new FeatureCompass("Compass", "00000040-0001"));
         }};
 
     }
@@ -28,6 +29,7 @@ public class STTarget extends Target {
     protected HashMap<String, Service> setServices() {
         return new HashMap<String, Service>() {{
             put("00000000-0001", new Service("ST Standard Service", "00000000-0001"));
+            put("00000000-0002", new Service("ST Basic Service", "00000000-0002"));
             put("00000000-0003", new Service("ST Extended Service", "00000000-0003"));
             put("00000000-000e", new Service("ST Debug Service", "00000000-000e"));
             put("00000000-000f", new Service("ST Configuration Service", "00000000-000f"));

@@ -115,7 +115,7 @@ public class BLEActivity extends AppCompatActivity {
         readBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                initTelemetry();
+                readData();
             }
         });
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
@@ -200,9 +200,9 @@ public class BLEActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-                invalidateOptionsMenu();
+                //    invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                invalidateOptionsMenu();
+                // invalidateOptionsMenu();
             } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 gattLoader.stop();
@@ -243,6 +243,7 @@ public class BLEActivity extends AppCompatActivity {
                         findViewById(R.id.connectBLE).setVisibility(View.GONE);
 
                     } else {
+                        stopTelemetry();
                         findViewById(R.id.iconFAIL).setVisibility(View.VISIBLE);
                         findViewById(R.id.iconOK).setVisibility(View.GONE);
                         readBtn.setVisibility(View.GONE);
@@ -312,11 +313,26 @@ public class BLEActivity extends AppCompatActivity {
         for (String gattPair : mappings.keySet()) {
             if (!gattPair.equals(MappingStorage.DEVICE_ID)) {
                 traceManager.trace("Mapping char");
-                bleService.setCharacteristicNotification(gattPair, true);
-                bleService.readCharacteristic(gattPair);
+                bleService.setupCharacteristic(gattPair, true);
             }
         }
         traceManager.info("Telemetry listeners registered!");
+    }
+
+    private void stopTelemetry() {
+        traceManager.info("Stopping telemetry...");
+        HashMap<String, String> mappings = storage.getAll();
+        for (String gattPair : mappings.keySet()) {
+            if (!gattPair.equals(MappingStorage.DEVICE_ID)) {
+                traceManager.trace("Mapping char");
+                bleService.setupCharacteristic(gattPair, false);
+            }
+        }
+        traceManager.info("Telemetry listeners stopped!");
+    }
+
+    private void readData() {
+        bleService.readCharacteristics();
     }
 
     private void retrieveData(String gattKey, byte[] data) {

@@ -7,14 +7,16 @@ import android.widget.TextView;
 
 public class TraceManager {
 
+    private static final int MAX_LENGTH = 1000;
     private TextView view;
 
     public TraceManager(TextView view) {
         this.view = view;
+        this.view.setMaxLines(MAX_LENGTH);
     }
 
     public void trace(String data) {
-        view.append(data + "\n");
+        colored(data, 0);
     }
 
     public void err(String data) {
@@ -33,7 +35,9 @@ public class TraceManager {
         int start = view.getText().length();
         view.append(data + "\n");
         int end = view.getText().length();
-
+        if (color == 0) {
+            return;
+        }
         Spannable spannableText = (Spannable) view.getText();
         spannableText.setSpan(new ForegroundColorSpan(color), start, end, 0);
     }

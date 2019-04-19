@@ -11,8 +11,7 @@ public class LoadingAlert {
     private AlertDialog loadingAlert;
 
     public LoadingAlert(Context context, String text) {
-        builder = new AlertDialog.Builder(context);
-        builder.setView(R.layout.loading);
+        this(context);
         builder.setMessage(text);
         //builder.setCancelable(false);
     }
@@ -22,13 +21,26 @@ public class LoadingAlert {
         builder.setCancelable(cancelable);
     }
 
+    public LoadingAlert(Context context) {
+        builder = new AlertDialog.Builder(context);
+        builder.setView(R.layout.loading);
+    }
+
     public void start() {
+        if (loadingAlert != null && loadingAlert.isShowing()) {
+            return;
+        }
         loadingAlert = builder.show();
     }
 
     public void start(String text) {
         builder.setMessage(text);
-        loadingAlert = builder.show();
+        start();
+    }
+
+    public void start(String text, boolean cancelable) {
+        builder.setCancelable(cancelable);
+        start(text);
     }
 
     public void stop() {

@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -14,8 +15,10 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.github.lucadruda.iotcentral.bluetooth.SampleGattAttributes;
 import com.github.lucadruda.iotcentral.helpers.GattPair;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,7 +26,7 @@ public class BLEService extends Service {
 
     private BluetoothManager blManager;
     private BluetoothAdapter blAdapter;
-    private String deviceAddress;
+    private HashMap<String, BluetoothGattCharacteristic> readableChars;
     private BluetoothGatt blGatt;
     private int mConnectionState = STATE_DISCONNECTED;
 
@@ -145,7 +148,7 @@ public class BLEService extends Service {
             //Unable to obtain a BluetoothAdapter
             return false;
         }
-
+        readableChars = new HashMap<>();
         return true;
     }
 
@@ -195,17 +198,12 @@ public class BLEService extends Service {
         blGatt.readCharacteristic(characteristic);
     }
 
-    public void readCharacteristic(String gattPair) {
-        if (blAdapter == null || blGatt == null) {
+    public void readCharacteristics() {
+        if (blAdapter == null || blGatt == null || readableChars.size() == 0) {
             return;
         }
-        GattPair pair = new GattPair(gattPair);
-        BluetoothGattService service = blGatt.getService(pair.getServiceUUID());
-        if (service != null) {
-            BluetoothGattCharacteristic chars = service.getCharacteristic(pair.getCharacteristicUUID());
-            if (chars != null) {
-                readCharacteristic(chars);
-            }
+        for (String gattKey : readableChars.keySet()) {
+            readCharacteristic(readableChars.get(gattKey));
         }
     }
 
@@ -215,10 +213,14 @@ public class BLEService extends Service {
             return;
         }
         blGatt.setCharacteristicNotification(characteristic, enabled);
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        blGatt.writeDescriptor(descriptor);
     }
 
-    public void setCharacteristicNotification(String gattPair,
-                                              boolean enabled) {
+    public void setupCharacteristic(String gattPair,
+                                    boolean enabled) {
         if (blAdapter == null || blGatt == null) {
             return;
         }
@@ -227,10 +229,19 @@ public class BLEService extends Service {
         if (service != null) {
             BluetoothGattCharacteristic chars = service.getCharacteristic(pair.getCharacteristicUUID());
             if (chars != null) {
-                setCharacteristicNotification(chars, enabled);
+                final int charaProp = chars.getProperties();
+                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+                    setCharacteristicNotification(
+                            chars, false);
+                    readableChars.put(gattPair, chars);
+                    blGatt.readCharacteristic(chars);
+                }
+                if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                    setCharacteristicNotification(
+                            chars, enabled);
+                }
             }
         }
-
     }
 
 

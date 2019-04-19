@@ -1,6 +1,13 @@
 package com.github.lucadruda.iotcentral;
 
 public class Constants {
+
+    /*---------------------- AUTHORIZATION --------------------------------------------------*/
+    public static final String USER_ID = "user_id";
+    public static final String USER_NAME = "user_name";
+    public static final String USER_EMAIL = "user_email";
+
+
     public static final String CLIENT_ID = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
     public static final String IOTC_TOKEN_AUDIENCE = "https://apps.azureiotcentral.com/";
     public static final String RM_TOKEN_AUDIENCE = "https://management.azure.com/";

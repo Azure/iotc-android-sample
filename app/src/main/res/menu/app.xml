@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/menu_logged_group">
+        <item
+            android:id="@+id/menu_user_name"
+            android:enabled="false"
+            android:title="User name"></item>
+        <item
+            android:id="@+id/menu_logout"
+            android:title="@string/sign_out" />
+    </group>
+    <group
+        android:id="@+id/menu_unlogged_group"
+        android:visible="false">
+        <item
+            android:id="@+id/menu_login"
+            android:title="@string/login" />
+    </group>
 
 </menu>

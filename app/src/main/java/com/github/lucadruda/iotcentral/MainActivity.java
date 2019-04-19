@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -21,6 +23,7 @@ import com.github.lucadruda.iotcentral.service.ARMClient;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.DataClient;
 import com.github.lucadruda.iotcentral.service.exceptions.DataException;
+import com.github.lucadruda.iotcentral.service.types.Subscription;
 import com.microsoft.aad.adal.AuthenticationContext;
 
 
@@ -30,142 +33,23 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
-    /* UI & Debugging Variables */
-    private static final String TAG = MainActivity.class.getSimpleName();
-    Button loginButton;
-    Button signOutButton;
-
-    private String userId;
-    private AuthenticationContext authContext;
 
     private Application[] apps;
     private ArrayList<Button> appButtons;
     private ExpandableGrid gridView;
     private FloatingActionButton newAppBtn;
-    private DataClient iotcDataClient;
-    private ARMClient armClient;
-
-    private LoadingAlert appLoadingAlert;
+    private TextView welcomeView;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        authContext = Authentication.create(getActivity(), this);
-        appLoadingAlert = new LoadingAlert(this, "Loading applications");
-
-        loginButton = (Button) findViewById(R.id.login);
-        signOutButton = (Button) findViewById(R.id.logout);
-        appButtons = new ArrayList<Button>();
-
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                onLoginClicked();
-            }
-        });
-
-        signOutButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                onSignOutClicked();
-            }
-        });
-
+        welcomeView = findViewById(R.id.welcome);
         gridView = (ExpandableGrid) findViewById(R.id.gridApps);
         gridView.setNumColumns(3);
-        newAppBtn = (FloatingActionButton) findViewById(R.id.newapp);
-
-        newAppBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent createIntent = new Intent(getActivity(), ApplicationCreationActivity.class);
-                // createIntent.putExtra("app", apps[position]);
-                startActivityForResult(createIntent, 0);
-            }
-        });
-
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v,
-                                    int position, long id) {
-                Toast.makeText(
-                        getApplicationContext(),
-                        ((TextView) v.findViewById(R.id.grid_item_label))
-                                .getText(), Toast.LENGTH_SHORT).show();
-
-            }
-        });
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        loginButton.callOnClick();
-/*        if (BuildConfig.DEBUG) {
-            final String iotctoken = getResources().getString(R.string.auth);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    getAuthCallback().onSuccess(iotctoken, "Luca");
-                }
-            }).start();
-        }*/
-    }
-
-    //
-    // Core Auth methods used by ADAL
-    // ==================================
-    // onActivityResult() - handles redirect from System browser
-    // onLoginClicked() - attempts to get tokens for iotcentral, if it succeeds calls iotcentral & updates UI
-    // onSignOutClicked() - Signs user out of the app & updates UI
-    //
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 10) {
-            updateApps(null, null);
-
-        } else {
-            Authentication.onActivityResult(authContext, requestCode, resultCode, data);
-        }
-    }
-
-    /*
-     * End user clicked login button, time for Auth
-     * Use ADAL to get an Access token for IoTCentral
-     */
-    private void onLoginClicked() {
-        Authentication.getToken(authContext, Constants.IOTC_TOKEN_AUDIENCE, getIoTCAuthCallback());
-    }
-
-
-    private void onSignOutClicked() {
-        // End user has clicked the Sign Out button
-        // Kill the token cache
-        // Optionally call the signout endpoint to fully sign out the user account
-        Authentication.cleanCache(authContext);
-        updateSignedOutUI();
-    }
-
-    //
-    // UI Helper methods
-    // ================================
-    // updateSuccessUI() - Updates UI when token acquisition succeeds
-    // updateSignedOutUI() - Updates UI when app sign out succeeds
-    //
-
-
-    @SuppressLint("SetTextI18n")
-    private void updateSuccessUI(String text, String userName) {
-        // Called on success from /me endpoint
-        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
-        findViewById(R.id.welcome).setVisibility(View.VISIBLE);
-        ((TextView) findViewById(R.id.welcome)).setText("Welcome, " +
-                userName);
-
-        gridView.setAdapter(new AppAdapter(this, apps));
-        gridView.setExpanded(true);
-        gridView.setVisibility(View.VISIBLE);
-        findViewById(R.id.newAppContainer).setVisibility(View.VISIBLE);
-
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
@@ -179,113 +63,111 @@ public class MainActivity extends AppCompatActivity {
                         textView.getText(), Toast.LENGTH_SHORT).show();
             }
         });
-        signOutButton.setVisibility(View.VISIBLE);
-        loginButton.setVisibility(View.GONE);
+        newAppBtn = (FloatingActionButton) findViewById(R.id.addBtn);
+
+        newAppBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent createIntent = new Intent(getActivity(), ApplicationCreationActivity.class);
+                // createIntent.putExtra("app", apps[position]);
+                startActivityForResult(createIntent, 0);
+            }
+        });
+
+        loadingAlert.start("Loading applications", false);
+        try {
+            enableRefresh(getRefreshListener());
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+            finish();
+        }
+        onLoginClicked();
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 10) {
+            refresh();
+        } else {
+            Authentication.onActivityResult(authContext, requestCode, resultCode, data);
+        }
+    }
+
+
+    @Override
+    protected void onLoginSucceded(final String userName) {
+        super.onLoginSucceded(userName);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                welcomeView.setText(getString(R.string.welcome_text) + userName);
+                welcomeView.setVisibility(View.VISIBLE);
+                refresh();
+            }
+        });
 
     }
 
-    @SuppressLint("SetTextI18n")
-    private void updateSignedOutUI() {
-        loginButton.setVisibility(View.VISIBLE);
-        signOutButton.setVisibility(View.GONE);
-        gridView.setVisibility(View.GONE);
+    @Override
+    protected void onLogoutClicked() {
+        super.onLogoutClicked();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                welcomeView.setVisibility(View.GONE);
+                gridView.setVisibility(View.INVISIBLE);
+            }
+        });
     }
-
-    //
-    // ADAL Callbacks
-    // ======================
-    // getActivity() - returns activity so we can acquireToken within a callback
-    // getAuthSilentCallback() - callback defined to handle acquireTokenSilent() case
-    // getAuthInteractiveCallback() - callback defined to handle acquireToken() case
-    //
 
     public Activity getActivity() {
         return this;
     }
 
 
-    private TokenCallback getIoTCAuthCallback() {
-        return new TokenCallback() {
+    private SwipeRefreshLayout.OnRefreshListener getRefreshListener() {
+        return new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onSuccess(String token, final String userName) {
-                try {
-                    if (token != null && token.length() > 0) {
-                        iotcDataClient = IoTCentral.createDataClient(token);
-
-                        Authentication.getToken(authContext, Constants.RM_TOKEN_AUDIENCE, getARMCAuthCallback());
+            public void onRefresh() {
+                loadingAlert.start();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        processApps();
+                        MainActivity.this.onAppsRefreshed();
                     }
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (URISyntaxException e) {
-                    e.printStackTrace();
-                }
-
-            }
-
-            @Override
-            public void onError(String errorMsg) {
+                }).start();
 
             }
         };
     }
 
-    private TokenCallback getARMCAuthCallback() {
-        return new TokenCallback() {
-            @Override
-            public void onSuccess(String token, final String userName) {
-                updateApps(token, userName);
-            }
-
-            @Override
-            public void onError(String errorMsg) {
-
-            }
-        };
-    }
-
-    private void updateApps(String token, final String userName) {
+    private void onAppsRefreshed() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                appLoadingAlert.start();
+                loadingAlert.stop();
+                if (refreshLayout.isRefreshing()) {
+                    refreshLayout.setRefreshing(false);
+                }
+                gridView.setAdapter(new AppAdapter(getActivity(), apps));
+                gridView.setExpanded(true);
+                gridView.setVisibility(View.VISIBLE);
+                findViewById(R.id.floatingBox).setVisibility(View.VISIBLE);
+                Toast.makeText(getActivity(), "Found " + apps.length + " application.", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void processApps() {
         try {
-            if (token != null && token.length() > 0) {
-                armClient = IoTCentral.createARMClient(token);
-            }
-            apps = iotcDataClient.listApps();
-
-            final String text;
-            if (userName != null && userName.length() > 0) {
-                text = "Found " + apps.length + " applications";
-            } else {
-                text = "";
-            }
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    appLoadingAlert.stop();
-                    updateSuccessUI(text, userName);
-                }
-            });
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            apps = dataClient.listApps();
+            // improve match to get template
+            //Application[] armApps = armClient.listAllTenantApplications();
         } catch (DataException e) {
             e.printStackTrace();
         }
-
     }
-
 }

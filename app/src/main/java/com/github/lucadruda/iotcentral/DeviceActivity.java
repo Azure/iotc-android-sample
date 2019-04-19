@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -41,7 +42,7 @@ public class DeviceActivity extends AppCompatActivity {
     private Device[] devices;
     private RecyclerView devicesView;
     private LoadingAlert templateLoader;
-    private Button newDeviceBtn;
+    private FloatingActionButton newDeviceBtn;
 
 
     @Override
@@ -58,9 +59,8 @@ public class DeviceActivity extends AppCompatActivity {
         templateLoader = new LoadingAlert(this, "Loading devices");
         templateLoader.start();
         ((TextView) findViewById(R.id.listTitle)).setText("Devices");
-        newDeviceBtn = findViewById(R.id.serviceButton);
-        newDeviceBtn.setText(R.string.create_device);
-        newDeviceBtn.setVisibility(View.VISIBLE);
+        findViewById(R.id.floatingBox).setVisibility(View.VISIBLE);
+        newDeviceBtn = findViewById(R.id.addBtn);
         newDeviceBtn.setOnClickListener(getOnClickListener(false));
         iotcThread.start();
 

@@ -16,12 +16,11 @@ import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.exceptions.DataException;
 import com.github.lucadruda.iotcentral.service.types.DeviceTemplate;
 
-public class ApplicationActivity extends AppCompatActivity {
+public class ApplicationActivity extends BaseActivity {
 
     private Application application;
     private DeviceTemplate[] models;
     private RecyclerView templatesView;
-    private LoadingAlert templateLoader;
 
 
     @Override
@@ -29,13 +28,12 @@ public class ApplicationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.list_layout);
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
-        getSupportActionBar().setTitle(application.getName());
+        setTitle(application.getName());
         ((TextView) findViewById(R.id.listTitle)).setText("Models");
         templatesView = findViewById(R.id.listView);
         templatesView.setHasFixedSize(true);
         templatesView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        templateLoader = new LoadingAlert(this, "Loading models");
-        templateLoader.start();
+        loadingAlert.start("Loading models");
         iotcThread.start();
 
     }
@@ -53,14 +51,14 @@ public class ApplicationActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                models = IoTCentral.getDataClient().listTemplates(application.getId());
+                models = dataClient.listTemplates(application.getId());
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
 
                         IoTCAdapter dataAdapter = new IoTCAdapter(getActivity(), models, onDeviceClickListener);
                         templatesView.setAdapter(dataAdapter);
-                        templateLoader.stop();
+                        loadingAlert.stop();
                     }
                 });
             } catch (DataException e) {

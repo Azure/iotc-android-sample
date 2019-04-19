@@ -1,110 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:visibility="visible"
-    tools:context="com.github.lucadruda.iotcentral.MainActivity">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/welcome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:text="@string/welcome_text"
-        android:textSize="20sp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/login"
-        android:layout_width="97dp"
-        android:layout_height="49dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="48dp"
-        android:background="#00a1f1"
-        android:text="@string/login"
-        android:textAllCaps="false"
-        android:visibility="visible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/logout"
-        android:layout_width="99dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
-        android:background="#00a1f1"
-        android:text="@string/sign_out"
-        android:textAllCaps="false"
-        android:visibility="invisible"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.861"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="478dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="96dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="20dp">
 
-        <com.github.lucadruda.iotcentral.ExpandableGrid
-            android:id="@+id/gridApps"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:layout_below="@+id/whatsNew"
-            android:columnWidth="100dp"
-            android:gravity="center"
-            android:horizontalSpacing="3dp"
-            android:numColumns="3"
-            android:padding="3dp"
-            android:stretchMode="columnWidth"
-            android:verticalSpacing="10dp" />
-
-    </ScrollView>
-
-    <FrameLayout
-        android:id="@+id/newAppContainer"
-        android:layout_width="57dp"
-        android:layout_height="59dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.92"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.913">
-
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/newapp"
+        <TextView
+            android:id="@+id/welcome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom"
-            android:src="@drawable/ic_add_box_black_24dp"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:pressedTranslationZ="12dp" />
-    </FrameLayout>
+            android:layout_marginTop="48dp"
+            android:text="@string/welcome_text"
+            android:textSize="20sp"
+            android:visibility="gone" />
 
 
-</android.support.constraint.ConstraintLayout>
+        <ScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:visibility="visible">
+
+            <com.github.lucadruda.iotcentral.ExpandableGrid
+                android:id="@+id/gridApps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnWidth="100dp"
+                android:gravity="center"
+                android:horizontalSpacing="3dp"
+                android:numColumns="3"
+                android:padding="3dp"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="10dp" />
+
+        </ScrollView>
+
+        <include
+            android:id="@+id/floatingBox"
+            layout="@layout/floating_button"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"></include>
+    </LinearLayout>
+
+</android.support.v4.widget.SwipeRefreshLayout>
