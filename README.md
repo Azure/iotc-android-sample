@@ -22,3 +22,17 @@ BLE Service mapping</br>
 <img title="BLE Service mapping" src="https://github.com/lucadruda/iotc-android-sample/raw/master/images/Screenshot_20190411-135651.png" height="350"/></br>
 <img title="BLE Service mapping" src="https://github.com/lucadruda/iotc-android-sample/raw/master/images/Screenshot_20190411-135657.png" height="350"/></br>
 <img title="BLE Service mapping" src="https://github.com/lucadruda/iotc-android-sample/raw/master/images/Screenshot_20190411-135705.png" height="350"/></br>
+
+
+## Sync telemetry fields to BLE characteristic
+It is possible to synchronize telemetry mapping with the cloud application in a bi-directional way (update from/to cloud). The device model must contain the following settings with the right names: 
+
+* A device property of type _text_ with field name "ble_mapping"
+* A device property of type _number_ with field name "ble_version"
+* A command of type _text_ with field name "updMapping" and two input fields:
+  * a field of type _text_ with name "mapping" which will contain the telemetry as a JSON string
+  * a field of type _number_ with name "version" which will contain the mapping version to keep track on synchronization.
+  
+If operator wants to update mapping on the mobile application can run the "updMapping" command and the device will sync values on properties.
+
+ 
