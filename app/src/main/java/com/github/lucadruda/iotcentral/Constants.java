@@ -19,11 +19,11 @@ public class Constants {
     /*------------------------------- MAPPING CONSTANTS ---------------------*/
     public static final String MAPPING_STORAGE = "MAPPING_STORAGE";
     public static final String MAP_PROPERTY_NAME = "ble_mapping";
+    public static final String MAP_PROPERTY_VERSION = "ble_version";
     public static final String MAP_COMMAND = "updMapping";
     public static final String MAP_COMMAND_FIELD = "mapping";
     public static final String MAP_COMMAND_VERSION = "version";
     public static final String MAPPING_PAYLOAD = "MAP_SETTING_PAYLOAD";
-    public static final String MAPPING_VERSION = "MAP_SETTING_VERSION";
     public final static String TELEMETRY_ASSIGNED = "TELEMETRY_ASSIGNED";
     public final static String TELEMETRY_REFRESHED = "TELEMETRY_REFRESHED";
     public final static String MEASURE_MAPPING_GATT_PAIR = "MEASURE_MAPPING_GATT_PAIR";

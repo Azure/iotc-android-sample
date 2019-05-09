@@ -104,6 +104,13 @@ public class MappingStorage {
         return obj.toString();
     }
 
+    public String getJsonVersion() {
+        JsonObject obj = new JsonObject();
+        obj.addProperty(Constants.MAP_PROPERTY_VERSION, getMappingVersion());
+        return obj.toString();
+    }
+
+
     public String getIoTCTelemetry(String gattUUID) {
         return this.cache.get(gattUUID);
     }

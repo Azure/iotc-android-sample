@@ -36,4 +36,9 @@ public class NotificationAlert {
         this.show();
     }
 
+    public void show(String message, DialogInterface.OnClickListener onClick) {
+        builder.setPositiveButton("OK", onClick);
+        this.show(message);
+    }
+
 }

@@ -128,6 +128,7 @@ public class DeviceService extends Service {
                         broadcastManager.sendBroadcast(connChangedIntent);
                     }
                     iotcClient = new IoTCClient(device.getDeviceId(), credentials.getIdScope(), IOTC_CONNECT.SYMM_KEY, credentials.getPrimaryKey());
+                    iotcClient.on(IOTC_EVENTS.Command, handleCommand());
                     connectDevice();
                 } else {
                     connChangedIntent.putExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS, IOTC_CONNECTION_STATE.COMMUNICATION_ERROR);
@@ -137,11 +138,12 @@ public class DeviceService extends Service {
         }).start();
     }
 
-    public void syncMapping(String mapping) {
+    public void syncMapping(String mapping, String version) {
         if (iotcClient != null) {
             try {
                 iotcClient.SendProperty(String.format("{\"%s\":{\"value\":\"sincronizzato\"}}", Constants.MAP_COMMAND), null);
                 iotcClient.SendProperty(mapping, null);
+                iotcClient.SendProperty(version, null);
             } catch (IoTCentralException e) {
                 e.printStackTrace();
             }
@@ -154,7 +156,6 @@ public class DeviceService extends Service {
             @Override
             public void run() {
                 try {
-                    iotcClient.on(IOTC_EVENTS.Command, handleCommand());
                     iotcClient.Connect();
                     connChangedIntent.putExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS, IOTC_CONNECTION_STATE.CONNECTION_OK.toString());
                     broadcastManager.sendBroadcast(connChangedIntent);

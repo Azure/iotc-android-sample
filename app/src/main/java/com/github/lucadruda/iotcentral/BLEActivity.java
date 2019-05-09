@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -61,7 +62,8 @@ public class BLEActivity extends BaseActivity {
     private Button readBtn;
     private TextView logView;
     private TraceManager traceManager;
-
+    private boolean isRunning = false;
+    private HashMap<String, List<String>> serviceMap;
     private final int DEVICE_SCAN_REQUEST = 1;
     private final int DEVICE_MAPPING_REQUEST = 2;
 
@@ -131,6 +133,7 @@ public class BLEActivity extends BaseActivity {
         });
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        isRunning = true;
         // binding to background BLE service and GATT manager
 
 
@@ -141,6 +144,7 @@ public class BLEActivity extends BaseActivity {
         super.onResume();
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(iotcReceiver, getIoTCReceiverFilter());
         registerReceiver(gattReceiver, getGattReceiverFilter());
+        isRunning = true;
         if (bleService == null && deviceAddress != null) {
             connectBLEService(deviceAddress);
         }
@@ -150,13 +154,15 @@ public class BLEActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(gattReceiver);
-        //LocalBroadcastManager.getInstance(this).unregisterReceiver(iotcReceiver);
+        isRunning = false;
+
     }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        isRunning = false;
         if (bleService != null) {
             unbindService(bleServiceConnection);
         }
@@ -179,6 +185,7 @@ public class BLEActivity extends BaseActivity {
             loadingAlert.stop();
         }
         super.onBackPressed();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(iotcReceiver);
     }
 
 
@@ -203,7 +210,7 @@ public class BLEActivity extends BaseActivity {
                 // mapping has been saved in storage. update value on cloud
                 //refresh storage
                 storage = new MappingStorage(getApplicationContext(), device.getDeviceId());
-                deviceService.syncMapping(storage.getJsonString());
+                deviceService.syncMapping(storage.getJsonString(), storage.getJsonVersion());
                 initTelemetry();
                 readBtn.setVisibility(View.VISIBLE);
             }
@@ -228,7 +235,7 @@ public class BLEActivity extends BaseActivity {
                     // start the mapping activity
                     // Show all the supported services and characteristics on the user interface.
                     loadingAlert.stop("Services fetched!");
-                    HashMap<String, List<String>> serviceMap = new HashMap<>();
+                    serviceMap = new HashMap<>();
                     for (BluetoothGattService service : bleService.getSupportedGattServices()) {
                         List<String> chars = new ArrayList();
                         for (BluetoothGattCharacteristic bleChar : service.getCharacteristics()) {
@@ -237,12 +244,7 @@ public class BLEActivity extends BaseActivity {
                         serviceMap.put(service.getUuid().toString(), chars);
                     }
 
-                    Intent mappingIntent = new Intent(getActivity(), MappingActivity.class);
-                    mappingIntent.putExtra(Constants.BLE_SERVICES_MAP, serviceMap);
-                    mappingIntent.putExtra(Constants.DEVICE, device);
-                    mappingIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
-                    mappingIntent.putExtra(Constants.MEASURES, (Serializable) IoTCentral.getMeasures(templateId));
-                    startActivityForResult(mappingIntent, DEVICE_MAPPING_REQUEST);
+                    launchMapping();
                     break;
                 case BLEService.ACTION_DATA_AVAILABLE:
                     // data available
@@ -277,10 +279,25 @@ public class BLEActivity extends BaseActivity {
                     if (currentCloudStorage.getMappingVersion() > storage.getMappingVersion()) {
                         // version on cloud is higher. let's substitute
                         storage = currentCloudStorage;
-                        //storage.updateVersion();
                         storage.commit();
                         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(new Intent(Constants.TELEMETRY_REFRESHED));
-                        deviceService.syncMapping(storage.getJsonString());
+                        if (BLEActivity.this.isRunning) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    notificationAlert.show("A new mapping has been set on the cloud. Refresh", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            stopTelemetry();
+                                            launchMapping();
+                                        }
+                                    });
+
+                                }
+                            });
+
+                        }
+                        deviceService.syncMapping(storage.getJsonString(), storage.getJsonVersion());
                     }
                     break;
                 case Constants.IOTCENTRAL_COMMAND_RECEIVED:
@@ -372,6 +389,17 @@ public class BLEActivity extends BaseActivity {
         Intent scanIntent = new Intent(getActivity(), DeviceScanActivity.class);
         scanIntent.putExtra(Constants.APPLICATION, application);
         startActivityForResult(scanIntent, DEVICE_SCAN_REQUEST);
+    }
+
+    private void launchMapping() {
+        if (serviceMap.size() > 0) {
+            Intent mappingIntent = new Intent(getActivity(), MappingActivity.class);
+            mappingIntent.putExtra(Constants.BLE_SERVICES_MAP, serviceMap);
+            mappingIntent.putExtra(Constants.DEVICE, device);
+            mappingIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
+            mappingIntent.putExtra(Constants.MEASURES, (Serializable) IoTCentral.getMeasures(templateId));
+            startActivityForResult(mappingIntent, DEVICE_MAPPING_REQUEST);
+        }
     }
 
     private void stopTelemetry() {

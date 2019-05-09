@@ -59,10 +59,21 @@ public class MappingActivity extends BaseActivity {
         serviceList.setAdapter(new GattAdapter(getActivity(), storage, serviceMap, measures));
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // binding to background BLE service and GATT manager
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(getMappingReceiver(), getReceiverFilter());
+
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mappingReceiver, getReceiverFilter());
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mappingReceiver);
+    }
 
     private View.OnClickListener getClickListener(final int result) {
         return new View.OnClickListener() {
@@ -70,7 +81,6 @@ public class MappingActivity extends BaseActivity {
             public void onClick(View v) {
                 Intent returnIntent = new Intent();
                 if (result == RESULT_OK) {
-                    storage.updateVersion();
                     storage.commit();
                 }
                 setResult(result, returnIntent);
@@ -79,30 +89,28 @@ public class MappingActivity extends BaseActivity {
         };
     }
 
-    private BroadcastReceiver getMappingReceiver() {
-        return new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Constants.TELEMETRY_ASSIGNED)) {
-                    String gattPair = intent.getStringExtra(Constants.MEASURE_MAPPING_GATT_PAIR);
-                    String telemetryID = intent.getStringExtra(Constants.MEASURE_MAPPING_IOTC);
-                    if (gattPair != null) {
-                        if (telemetryID != null) {
-                            storage.add(gattPair, telemetryID);
-                        } else {
-                            storage.remove(gattPair);
-                        }
+    private BroadcastReceiver mappingReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Constants.TELEMETRY_ASSIGNED)) {
+                String gattPair = intent.getStringExtra(Constants.MEASURE_MAPPING_GATT_PAIR);
+                String telemetryID = intent.getStringExtra(Constants.MEASURE_MAPPING_IOTC);
+                if (gattPair != null) {
+                    if (telemetryID != null) {
+                        storage.add(gattPair, telemetryID);
+                    } else {
+                        storage.remove(gattPair);
                     }
-                    saveBtn.setEnabled(storage.size() > 0);
-                } else if (intent.getAction().equals(Constants.TELEMETRY_REFRESHED)) {
-                    notificationAlert.show("A new mapping has been set on the cloud. Refresh");
-                    storage = new MappingStorage(getApplicationContext(), device.getDeviceId());
-                    serviceList.invalidate();
-                    serviceList.setAdapter(new GattAdapter(getActivity(), storage, serviceMap, measures));
                 }
+                saveBtn.setEnabled(storage.size() > 0);
+            } else if (intent.getAction().equals(Constants.TELEMETRY_REFRESHED)) {
+                notificationAlert.show("A new mapping has been set on the cloud. Refresh");
+                storage = new MappingStorage(getApplicationContext(), device.getDeviceId());
+                serviceList.invalidate();
+                serviceList.setAdapter(new GattAdapter(getActivity(), storage, serviceMap, measures));
             }
-        };
-    }
+        }
+    };
 
     private IntentFilter getReceiverFilter() {
         final IntentFilter intentFilter = new IntentFilter();
