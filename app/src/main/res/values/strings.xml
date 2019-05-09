@@ -7,12 +7,13 @@
     <string name="scope">ScopeId</string>
     <string name="masterkey">Master Key</string>
     <string name="deviceid">Device Id</string>
+    <string name="deviceName">Device name</string>
     <string name="models">Models</string>
     <string name="devices">Devices</string>
     <string name="next">Next</string>
     <string name="connect">Connect</string>
     <string name="create">Create</string>
-    <string name="create_device">Create New</string>
+    <string name="create_device">Create new Device</string>
     <string name="directory">Directory</string>
     <string name="subscription">Subscription</string>
     <string name="region">Region</string>
@@ -30,11 +31,15 @@
     <string name="scanBleTitle">Azure IoT Central - BLE discovery</string>
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
+
+    <!-- STANDARD -->
     <string name="menu_connect">Connect</string>
     <string name="menu_disconnect">Disconnect</string>
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
     <string name="read">Read</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
 
     <string name="label_device_address">Device address:</string>
     <string name="label_state">State:</string>

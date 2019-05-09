@@ -41,6 +41,9 @@
             android:name=".DeviceScanActivity"
             android:configChanges="orientation|screenSize"></activity>
         <activity
+            android:name=".MappingActivity"
+            android:configChanges="orientation|screenSize"></activity>
+        <activity
             android:name=".BLEActivity"
             android:windowSoftInputMode="stateHidden" />
 
@@ -49,7 +52,8 @@
             android:enabled="true" />
         <service
             android:name=".services.DeviceService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:stopWithTask="true" />
     </application>
 
 </manifest>

@@ -3,9 +3,12 @@ package com.github.lucadruda.iotcentral;
 import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -14,16 +17,14 @@ import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Trace;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,8 +32,8 @@ import android.widget.Toast;
 import com.github.lucadruda.iotc.device.enums.IOTC_CONNECTION_STATE;
 import com.github.lucadruda.iotcentral.adapters.GattAdapter;
 import com.github.lucadruda.iotcentral.helpers.GattPair;
-import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
 import com.github.lucadruda.iotcentral.helpers.TraceManager;
+import com.github.lucadruda.iotcentral.service.Device;
 import com.github.lucadruda.iotcentral.services.BLEService;
 import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.service.Application;
@@ -40,28 +41,31 @@ import com.github.lucadruda.iotcentral.services.DeviceService;
 import com.github.lucadruda.iotcentral.targets.Feature;
 import com.github.lucadruda.iotcentral.targets.Targets;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 
-public class BLEActivity extends AppCompatActivity {
+public class BLEActivity extends BaseActivity {
 
 
     private Application application;
     private String templateId;
-    private String deviceName;
-    private String deviceAddress;
-    private ExpandableListView serviceList;
     private BLEService bleService;
     private DeviceService deviceService;
+    private Device device;
+    private String deviceAddress;
     private MappingStorage storage;
     private Button connectBtn;
     private Button readBtn;
-    private LoadingAlert gattLoader, iotcLoader;
     private TextView logView;
     private TraceManager traceManager;
-    private EditText deviceNameEditor;
-    private boolean deviceExists;
+    private boolean isRunning = false;
+    private HashMap<String, List<String>> serviceMap;
+    private final int DEVICE_SCAN_REQUEST = 1;
+    private final int DEVICE_MAPPING_REQUEST = 2;
 
     private final ServiceConnection bleServiceConnection = new ServiceConnection() {
         @Override
@@ -72,7 +76,7 @@ public class BLEActivity extends AppCompatActivity {
                 Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_LONG).show();
                 finish();
             }
-            bleService.connect(deviceAddress);
+            bleService.connect();
         }
 
         @Override
@@ -100,41 +104,36 @@ public class BLEActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ble_service);
-        deviceExists = getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false);
-        deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
-        deviceAddress = getIntent().getStringExtra(Constants.DEVICE_ADDRESS);
-        ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
-        deviceNameEditor = findViewById(R.id.deviceId);
-        deviceNameEditor.setText(deviceName);
-        if (getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false)) {
-            deviceNameEditor.setEnabled(false);
-        }
-        connectBtn = findViewById(R.id.connectBLE);
-        connectBtn.setOnClickListener(onConnectButtonClick());
+        device = (Device) getIntent().getSerializableExtra(Constants.DEVICE);
+        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
+        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
+
+        storage = new MappingStorage(getApplicationContext(), device.getDeviceId());
+        setTitle(application.getName());
+
+// CONNECT DEVICE TO IOTCENTRAL FIRST
+        connectIoTCService();
         readBtn = findViewById(R.id.readBLE);
+        readBtn.setVisibility(View.INVISIBLE);
         readBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 readData();
             }
         });
-        application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
-        templateId = (String) getIntent().getSerializableExtra(Constants.DEVICE_TEMPLATE_ID);
-        serviceList = findViewById(R.id.gatt_services_list);
+
         logView = findViewById(R.id.logView);
         traceManager = new TraceManager(logView);
-        storage = new MappingStorage(getApplicationContext(), deviceName);
-        getSupportActionBar().setTitle(deviceName);
+
         findViewById(R.id.disconnectBLE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 deviceService.disconnectDevice();
             }
         });
-        gattLoader = new LoadingAlert(this, "Loading services");
-        gattLoader.start();
-        iotcLoader = new LoadingAlert(this, "Connecting device");
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        isRunning = true;
         // binding to background BLE service and GATT manager
 
 
@@ -143,28 +142,30 @@ public class BLEActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(updateReceiver, getReceiverFilter());
-        registerReceiver(updateReceiver, getReceiverFilter());
-        if (bleService != null) {
-            final boolean result = bleService.connect(deviceAddress);
-        } else {
-            Intent bleServiceIntent = new Intent(this, BLEService.class);
-            bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(iotcReceiver, getIoTCReceiverFilter());
+        registerReceiver(gattReceiver, getGattReceiverFilter());
+        isRunning = true;
+        if (bleService == null && deviceAddress != null) {
+            connectBLEService(deviceAddress);
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(updateReceiver);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(updateReceiver);
+        unregisterReceiver(gattReceiver);
+        isRunning = false;
+
     }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(bleServiceConnection);
+        isRunning = false;
+        if (bleService != null) {
+            unbindService(bleServiceConnection);
+        }
         bleService = null;
     }
 
@@ -180,92 +181,146 @@ public class BLEActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (gattLoader.isStarted()) {
-            gattLoader.stop();
+        if (loadingAlert.isStarted()) {
+            loadingAlert.stop();
         }
-        if (serviceList.getVisibility() == View.VISIBLE) {
-            super.onBackPressed();
-        } else {
-            serviceList.setVisibility(View.VISIBLE);
-            findViewById(R.id.logScroll).setVisibility(View.GONE);
+        super.onBackPressed();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(iotcReceiver);
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == DEVICE_SCAN_REQUEST) {
+            if (resultCode == Activity.RESULT_OK) {
+                deviceAddress = data.getStringExtra(Constants.DEVICE_ADDRESS);
+                findViewById(R.id.deviceInfo).setVisibility(View.VISIBLE);
+                ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
+                ((TextView) findViewById(R.id.deviceName)).setText(device.getName());
+                connectBLEService(deviceAddress);
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                // user pressed back button at scan
+                deviceAddress = null;
+                finish();
+            }
+        }
+        if (requestCode == DEVICE_MAPPING_REQUEST) {
+            if (resultCode == Activity.RESULT_OK) {
+                // mapping has been saved in storage. update value on cloud
+                //refresh storage
+                storage = new MappingStorage(getApplicationContext(), device.getDeviceId());
+                deviceService.syncMapping(storage.getJsonString(), storage.getJsonVersion());
+                initTelemetry();
+                readBtn.setVisibility(View.VISIBLE);
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+// if mapping has been canceled. scan again
+                deviceAddress = null;
+                launchScan();
+            }
         }
     }
 
-    private Activity getActivity() {
-        return this;
-    }
-
-    private final BroadcastReceiver updateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver gattReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (BLEService.ACTION_GATT_CONNECTED.equals(action)) {
-                //    invalidateOptionsMenu();
-            } else if (BLEService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                // invalidateOptionsMenu();
-            } else if (BLEService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-                gattLoader.stop();
-                serviceList.setVisibility(View.VISIBLE);
-                serviceList.setAdapter(new GattAdapter(getActivity(), deviceName, bleService.getSupportedGattServices(), IoTCentral.getMeasures(templateId)));
-            } else if (BLEService.ACTION_DATA_AVAILABLE.equals(action)) {
-// data available
-                retrieveData(intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT_PAIR), intent.getByteArrayExtra(BLEService.EXTRA_DATA));
-            } else if (BLEService.TELEMETRY_ASSIGNED.equals(action)) {
-
-                String gattPair = intent.getStringExtra(BLEService.MEASURE_MAPPING_GATT_PAIR);
-                String telemetryID = intent.getStringExtra(BLEService.MEASURE_MAPPING_IOTC);
-                if (gattPair != null) {
-                    if (telemetryID != null) {
-                        storage.add(gattPair, telemetryID);
-                        connectBtn.setEnabled(true);
-                    } else {
-                        storage.remove(gattPair);
+            switch (action) {
+                case BLEService.ACTION_GATT_CONNECTED:
+                    break;
+                case BLEService.ACTION_GATT_DISCONNECTED:
+                    break;
+                case BLEService.ACTION_GATT_SERVICES_DISCOVERED:
+                    // start the mapping activity
+                    // Show all the supported services and characteristics on the user interface.
+                    loadingAlert.stop("Services fetched!");
+                    serviceMap = new HashMap<>();
+                    for (BluetoothGattService service : bleService.getSupportedGattServices()) {
+                        List<String> chars = new ArrayList();
+                        for (BluetoothGattCharacteristic bleChar : service.getCharacteristics()) {
+                            chars.add(bleChar.getUuid().toString());
+                        }
+                        serviceMap.put(service.getUuid().toString(), chars);
                     }
-                }
-                if (storage.size() == 0) {
-                    connectBtn.setEnabled(false);
-                }
-            } else if (Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE.equals(action)) {
-                if (Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE.equals(action)) {
-                    iotcLoader.stop();
-                    if (intent.getStringExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS).equals(IOTC_CONNECTION_STATE.CONNECTION_OK.toString())) {
-                        storage.setDeviceId(deviceNameEditor.getText().toString());
-                        storage.commit();
-                        serviceList.setVisibility(View.GONE);
-                        findViewById(R.id.logScroll).setVisibility(View.VISIBLE);
-                        readBtn.setVisibility(View.VISIBLE);
-                        initTelemetry();
-                        findViewById(R.id.iconOK).setVisibility(View.VISIBLE);
-                        findViewById(R.id.iconFAIL).setVisibility(View.GONE);
 
-                        findViewById(R.id.disconnectBLE).setVisibility(View.VISIBLE);
-                        findViewById(R.id.connectBLE).setVisibility(View.GONE);
-
-                    } else {
-                        stopTelemetry();
-                        findViewById(R.id.iconFAIL).setVisibility(View.VISIBLE);
-                        findViewById(R.id.iconOK).setVisibility(View.GONE);
-                        readBtn.setVisibility(View.GONE);
-                        findViewById(R.id.disconnectBLE).setVisibility(View.GONE);
-                        findViewById(R.id.connectBLE).setVisibility(View.VISIBLE);
-                    }
-                }
-            } else if (Constants.IOTCENTRAL_COMMAND_RECEIVED.equals(action)) {
-                onCommandReceived(intent.getStringExtra(Constants.IOTCENTRAL_COMMAND_TEXT));
+                    launchMapping();
+                    break;
+                case BLEService.ACTION_DATA_AVAILABLE:
+                    // data available
+                    retrieveData(intent.getStringExtra(Constants.MEASURE_MAPPING_GATT_PAIR), intent.getByteArrayExtra(BLEService.EXTRA_DATA));
+                    break;
             }
         }
     };
 
-    private IntentFilter getReceiverFilter() {
+    private final BroadcastReceiver iotcReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            switch (action) {
+                case Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE:
+                    if (intent.getStringExtra(Constants.IOTCENTRAL_DEVICE_CONNECTION_STATUS).equals(IOTC_CONNECTION_STATE.CONNECTION_OK.toString())) {
+                        // just connected. open scan activity to select a device
+                        loadingAlert.stop(getString(R.string.connected));
+                        // launch scan
+                        launchScan();
+                    } else {
+                        loadingAlert.stop(getString(R.string.disconnected));
+                        stopTelemetry();
+                        readBtn.setVisibility(View.GONE);
+                        findViewById(R.id.disconnectBLE).setVisibility(View.GONE);
+                        findViewById(R.id.connectBLE).setVisibility(View.VISIBLE);
+                    }
+                    break;
+                case Constants.IOTCENTRAL_MAPPING_CHANGE:
+                    String cmdPayload = intent.getStringExtra(Constants.MAPPING_PAYLOAD);
+                    MappingStorage currentCloudStorage = MappingStorage.getFromCommandPayload(getApplicationContext(), device.getDeviceId(), cmdPayload);
+                    if (currentCloudStorage.getMappingVersion() > storage.getMappingVersion()) {
+                        // version on cloud is higher. let's substitute
+                        storage = currentCloudStorage;
+                        storage.commit();
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(new Intent(Constants.TELEMETRY_REFRESHED));
+                        if (BLEActivity.this.isRunning) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    notificationAlert.show("A new mapping has been set on the cloud. Refresh", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            stopTelemetry();
+                                            launchMapping();
+                                        }
+                                    });
+
+                                }
+                            });
+
+                        }
+                        deviceService.syncMapping(storage.getJsonString(), storage.getJsonVersion());
+                    }
+                    break;
+                case Constants.IOTCENTRAL_COMMAND_RECEIVED:
+                    onCommandReceived(intent.getStringExtra(Constants.IOTCENTRAL_COMMAND_TEXT));
+                    break;
+            }
+        }
+    };
+
+    private IntentFilter getGattReceiverFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-        intentFilter.addAction(BLEService.TELEMETRY_ASSIGNED);
+        return intentFilter;
+    }
+
+    private IntentFilter getIoTCReceiverFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Constants.IOTCENTRAL_DEVICE_CONNECTION_CHANGE);
         intentFilter.addAction(Constants.IOTCENTRAL_COMMAND_RECEIVED);
+        intentFilter.addAction(Constants.IOTCENTRAL_MAPPING_CHANGE);
         return intentFilter;
     }
 
@@ -275,7 +330,6 @@ public class BLEActivity extends AppCompatActivity {
             public void onClick(View v) {
 // commit preferences
                 storage.commit();
-                iotcLoader.start();
                 connectIoTCService();
                 /* Intent deviceServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
                 connectionIntent.putExtra(Constants.DEVICE_NAME, deviceName);
@@ -290,10 +344,10 @@ public class BLEActivity extends AppCompatActivity {
     }
 
     private void connectIoTCService() {
+        loadingAlert.start("Connecting to IoTCentral...");
         if (deviceService == null) {
             Intent iotcServiceIntent = new Intent(getApplicationContext(), DeviceService.class);
-            iotcServiceIntent.putExtra(Constants.DEVICE_NAME, deviceNameEditor.getText().toString());
-            iotcServiceIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
+            iotcServiceIntent.putExtra(Constants.DEVICE, device);
             iotcServiceIntent.putExtra(Constants.APPLICATION, application);
             iotcServiceIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -302,16 +356,28 @@ public class BLEActivity extends AppCompatActivity {
                 startService(iotcServiceIntent);
             }
             bindService(iotcServiceIntent, iotcServiceConnection, BIND_AUTO_CREATE);
-        } else {
+        } /*else {
             deviceService.initialize();
+        }*/
+    }
+
+    private void connectBLEService(String deviceAddress) {
+        loadingAlert.start("Connecting to Bluetooth device...");
+        if (bleService == null) {
+            Intent bleServiceIntent = new Intent(this, BLEService.class);
+            bleServiceIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
+            bindService(bleServiceIntent, bleServiceConnection, BIND_AUTO_CREATE);
+        } else {
+            bleService.connect();
         }
     }
+
 
     private void initTelemetry() {
         traceManager.info("Starting telemetry initialization...");
         HashMap<String, String> mappings = storage.getAll();
         for (String gattPair : mappings.keySet()) {
-            if (!gattPair.equals(MappingStorage.DEVICE_ID)) {
+            if (!gattPair.equals(MappingStorage.MAPPING_VERSION)) {
                 traceManager.trace("Mapping char");
                 bleService.setupCharacteristic(gattPair, true);
             }
@@ -319,11 +385,28 @@ public class BLEActivity extends AppCompatActivity {
         traceManager.info("Telemetry listeners registered!");
     }
 
+    private void launchScan() {
+        Intent scanIntent = new Intent(getActivity(), DeviceScanActivity.class);
+        scanIntent.putExtra(Constants.APPLICATION, application);
+        startActivityForResult(scanIntent, DEVICE_SCAN_REQUEST);
+    }
+
+    private void launchMapping() {
+        if (serviceMap.size() > 0) {
+            Intent mappingIntent = new Intent(getActivity(), MappingActivity.class);
+            mappingIntent.putExtra(Constants.BLE_SERVICES_MAP, serviceMap);
+            mappingIntent.putExtra(Constants.DEVICE, device);
+            mappingIntent.putExtra(Constants.DEVICE_ADDRESS, deviceAddress);
+            mappingIntent.putExtra(Constants.MEASURES, (Serializable) IoTCentral.getMeasures(templateId));
+            startActivityForResult(mappingIntent, DEVICE_MAPPING_REQUEST);
+        }
+    }
+
     private void stopTelemetry() {
         traceManager.info("Stopping telemetry...");
         HashMap<String, String> mappings = storage.getAll();
         for (String gattPair : mappings.keySet()) {
-            if (!gattPair.equals(MappingStorage.DEVICE_ID)) {
+            if (!gattPair.equals(MappingStorage.MAPPING_VERSION)) {
                 traceManager.trace("Mapping char");
                 bleService.setupCharacteristic(gattPair, false);
             }

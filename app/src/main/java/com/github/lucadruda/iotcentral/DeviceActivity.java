@@ -1,6 +1,7 @@
 package com.github.lucadruda.iotcentral;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -23,26 +24,29 @@ import com.github.lucadruda.iotc.device.IoTCClient;
 import com.github.lucadruda.iotc.device.enums.IOTC_CONNECT;
 import com.github.lucadruda.iotc.device.exceptions.IoTCentralException;
 import com.github.lucadruda.iotcentral.adapters.IoTCAdapter;
+import com.github.lucadruda.iotcentral.helpers.InputAlert;
 import com.github.lucadruda.iotcentral.helpers.LoadingAlert;
 import com.github.lucadruda.iotcentral.service.Application;
 import com.github.lucadruda.iotcentral.service.Device;
 import com.github.lucadruda.iotcentral.service.DeviceCredentials;
 import com.github.lucadruda.iotcentral.service.exceptions.DataException;
 import com.github.lucadruda.iotcentral.service.types.DeviceTemplate;
+import com.github.lucadruda.iotcentral.services.DeviceService;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class DeviceActivity extends AppCompatActivity {
+public class DeviceActivity extends BaseActivity {
 
     private Application application;
     private String templateId;
     private Device[] devices;
     private RecyclerView devicesView;
-    private LoadingAlert templateLoader;
     private FloatingActionButton newDeviceBtn;
+    private Device device;
+    private DeviceService deviceService;
 
 
     @Override
@@ -56,13 +60,12 @@ public class DeviceActivity extends AppCompatActivity {
         devicesView = findViewById(R.id.listView);
         devicesView.setHasFixedSize(true);
         devicesView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        templateLoader = new LoadingAlert(this, "Loading devices");
-        templateLoader.start();
+        loadingAlert.start("Loading devices");
         ((TextView) findViewById(R.id.listTitle)).setText("Devices");
         findViewById(R.id.floatingBox).setVisibility(View.VISIBLE);
         newDeviceBtn = findViewById(R.id.addBtn);
-        newDeviceBtn.setOnClickListener(getOnClickListener(false));
-        iotcThread.start();
+        newDeviceBtn.setOnClickListener(getOnClickListener());
+        listThread.start();
 
     }
 
@@ -76,17 +79,17 @@ public class DeviceActivity extends AppCompatActivity {
         return true;
     }
 
-    Thread iotcThread = new Thread(new Runnable() {
+    Thread listThread = new Thread(new Runnable() {
         @Override
         public void run() {
             try {
-                devices = IoTCentral.getDataClient().listDevices(application.getId(), templateId);
+                devices = dataClient.listDevices(application.getId(), templateId);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        IoTCAdapter dataAdapter = new IoTCAdapter(getActivity(), devices, getOnClickListener(true));
+                        IoTCAdapter dataAdapter = new IoTCAdapter(getActivity(), devices, getOnClickListener());
                         devicesView.setAdapter(dataAdapter);
-                        templateLoader.stop();
+                        loadingAlert.stop();
                     }
                 });
             } catch (DataException e) {
@@ -95,28 +98,59 @@ public class DeviceActivity extends AppCompatActivity {
         }
     });
 
+    private Thread getCreationDeviceThread(final String deviceName, final String deviceId) {
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    loadingAlert.start("Creating device \"" + deviceName + "\"");
+                    device = dataClient.createDevice(application.getId(), deviceName, templateId);
+                    loadingAlert.stop();
+                    startServiceActivity();
+                } catch (DataException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+
     public Activity getActivity() {
         return this;
     }
 
-    private View.OnClickListener getOnClickListener(final boolean exists) {
+    private View.OnClickListener getOnClickListener() {
         return new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent appIntent = new Intent(getActivity(), DeviceScanActivity.class);
-                appIntent.putExtra(Constants.APPLICATION, application);
-                appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
-                if (exists) {
-                    final Device device = (Device) v.getTag();
-                    if (device == null) {
-                        return;
-                    }
-                    appIntent.putExtra(Constants.DEVICE_NAME, device.getDeviceId());
-                    appIntent.putExtra(Constants.DEVICE_EXISTS, true);
+                if (v == newDeviceBtn) {
+                    new InputAlert(getActivity(), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            String name = ((InputAlert) dialog).getText();
+                            getCreationDeviceThread(name, name.toLowerCase().replace(' ', '-')).start();
+                        }
+                    }, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    }, getString(R.string.create_device)).start();
+                } else {
+                    //existing device
+                    device = (Device) v.getTag();
+                    startServiceActivity();
                 }
-                startActivity(appIntent);
             }
         };
 
+    }
+
+    private void startServiceActivity() {
+        Intent appIntent = new Intent(getActivity(), BLEActivity.class);
+        appIntent.putExtra(Constants.APPLICATION, application);
+        appIntent.putExtra(Constants.DEVICE, device);
+        appIntent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
+        startActivity(appIntent);
     }
 }
