@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.github.lucadruda.iotcentral.Constants;
 import com.github.lucadruda.iotcentral.bluetooth.SampleGattAttributes;
 import com.github.lucadruda.iotcentral.helpers.GattPair;
 
@@ -28,6 +29,7 @@ public class BLEService extends Service {
     private BluetoothAdapter blAdapter;
     private HashMap<String, BluetoothGattCharacteristic> readableChars;
     private BluetoothGatt blGatt;
+    private String deviceAddress;
     private int mConnectionState = STATE_DISCONNECTED;
 
     private static final int STATE_DISCONNECTED = 0;
@@ -45,11 +47,8 @@ public class BLEService extends Service {
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
-    public final static String TELEMETRY_ASSIGNED =
-            "TELEMETRY_ASSIGNED";
 
-    public final static String MEASURE_MAPPING_GATT_PAIR = "MEASURE_MAPPING_GATT_PAIR";
-    public final static String MEASURE_MAPPING_IOTC = "MEASURE_MAPPING_IOTC";
+
 
     private final IBinder mBinder = new LocalBinder();
 
@@ -62,7 +61,10 @@ public class BLEService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        deviceAddress = intent.getStringExtra(Constants.DEVICE_ADDRESS);
+        if (deviceAddress != null)
+            return mBinder;
+        return null;
     }
 
     @Override
@@ -126,7 +128,7 @@ public class BLEService extends Service {
            /* final StringBuilder stringBuilder = new StringBuilder(data.length);
             for (byte byteChar : data)
                 stringBuilder.append(String.format("%02X ", byteChar));*/
-            intent.putExtra(MEASURE_MAPPING_GATT_PAIR, new GattPair(characteristic).getKey());
+            intent.putExtra(Constants.MEASURE_MAPPING_GATT_PAIR, new GattPair(characteristic).getKey());
             intent.putExtra(EXTRA_DATA, data);
         }
         sendBroadcast(intent);
@@ -155,18 +157,17 @@ public class BLEService extends Service {
     /**
      * Connects to the GATT server hosted on the Bluetooth LE device.
      *
-     * @param address The device address of the destination device.
      * @return Return true if the connection is initiated successfully. The connection result
      * is reported asynchronously through the
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
-    public boolean connect(final String address) {
-        if (blAdapter == null || address == null) {
+    public boolean connect() {
+        if (blAdapter == null || deviceAddress == null) {
             return false;
         }
 
-        final BluetoothDevice device = blAdapter.getRemoteDevice(address);
+        final BluetoothDevice device = blAdapter.getRemoteDevice(deviceAddress);
         if (device == null) {
             // Device not found.  Unable to connect.
             return false;

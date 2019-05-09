@@ -2,6 +2,7 @@ package com.github.lucadruda.iotcentral.helpers;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.widget.Toast;
 
 import com.github.lucadruda.iotcentral.R;
 
@@ -9,6 +10,7 @@ public class LoadingAlert {
 
     private AlertDialog.Builder builder;
     private AlertDialog loadingAlert;
+    private Context context;
 
     public LoadingAlert(Context context, String text) {
         this(context);
@@ -22,6 +24,7 @@ public class LoadingAlert {
     }
 
     public LoadingAlert(Context context) {
+        this.context = context;
         builder = new AlertDialog.Builder(context);
         builder.setView(R.layout.loading);
     }
@@ -47,6 +50,11 @@ public class LoadingAlert {
         if (loadingAlert != null && loadingAlert.isShowing()) {
             loadingAlert.dismiss();
         }
+    }
+
+    public void stop(String message) {
+        stop();
+        Toast.makeText(this.context, message, Toast.LENGTH_SHORT);
     }
 
     public boolean isStarted() {

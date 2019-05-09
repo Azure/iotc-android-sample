@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.TextView;
 
+import com.github.lucadruda.iotcentral.Constants;
 import com.github.lucadruda.iotcentral.helpers.MappingStorage;
 import com.github.lucadruda.iotcentral.services.BLEService;
 import com.github.lucadruda.iotcentral.service.types.Measure;
@@ -118,9 +119,9 @@ public class MeasureAdapter extends ArrayAdapter<Measure> {
                 Measure item = (Measure) parent.getItemAtPosition(position);
                 String key = item.getFieldName();
                 Intent dataChangeIntent = new Intent(MEASURE_DATASTORE_CHANGE);
-                Intent assignmentIntent = new Intent(BLEService.TELEMETRY_ASSIGNED);
-                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_GATT_PAIR, gattPair);
-                assignmentIntent.putExtra(BLEService.MEASURE_MAPPING_IOTC, key);
+                Intent assignmentIntent = new Intent(Constants.TELEMETRY_ASSIGNED);
+                assignmentIntent.putExtra(Constants.MEASURE_MAPPING_GATT_PAIR, gattPair);
+                assignmentIntent.putExtra(Constants.MEASURE_MAPPING_IOTC, key);
                 if (currentKey.equals(key)) {
                     return;
                 } else if (currentKey.equals(DEFAULT_TEXT_KEY) && !key.equals(DEFAULT_TEXT_KEY)) {

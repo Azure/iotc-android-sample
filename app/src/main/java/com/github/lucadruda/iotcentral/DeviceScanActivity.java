@@ -38,10 +38,7 @@ public class DeviceScanActivity extends BaseActivity {
     private RecyclerView scannedView;
     private boolean mScanning;
     private Handler mHandler;
-    private boolean deviceExists;
-    private String deviceName;
     private Application application;
-    private String templateId;
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
@@ -52,12 +49,7 @@ public class DeviceScanActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.list_layout);
         application = (Application) getIntent().getSerializableExtra(Constants.APPLICATION);
-        templateId = getIntent().getStringExtra(Constants.DEVICE_TEMPLATE_ID);
-        deviceExists = getIntent().getBooleanExtra(Constants.DEVICE_EXISTS, false);
-        if (deviceExists) {
-            deviceName = getIntent().getStringExtra(Constants.DEVICE_NAME);
-        }
-        getSupportActionBar().setTitle(application.getName() + " - " + getString(R.string.scanBleTitle));
+        setTitle(application.getName() + " - " + getString(R.string.scanBleTitle));
         scannedView = findViewById(R.id.listView);
         scannedView.setHasFixedSize(true);
         scannedView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -124,7 +116,6 @@ public class DeviceScanActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
 
         checkPermissions(this);
         if (!bluetoothAdapter.isEnabled()) {
@@ -215,6 +206,7 @@ public class DeviceScanActivity extends BaseActivity {
 
             };
 
+    // user clicked on a found ble device
     private View.OnClickListener onDeviceClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -222,25 +214,16 @@ public class DeviceScanActivity extends BaseActivity {
             if (device == null) {
                 return;
             }
-            final Intent intent = new Intent(getActivity(), BLEActivity.class);
-
-            if (deviceExists && deviceName != null) {
-                intent.putExtra(Constants.DEVICE_EXISTS, true);
-
-            } else {
-                deviceName = device.getName();
-            }
-            intent.putExtra(Constants.DEVICE_NAME, deviceName);
-            intent.putExtra(Constants.DEVICE_ADDRESS, device.getAddress());
-            intent.putExtra(Constants.APPLICATION, application);
-            intent.putExtra(Constants.DEVICE_TEMPLATE_ID, templateId);
 
             if (mScanning) {
                 bleScanner.stopScan(bleScanCallback);
                 mScanning = false;
                 stopRefresh();
             }
-            startActivity(intent);
+            Intent returnIntent = new Intent();
+            returnIntent.putExtra(Constants.DEVICE_ADDRESS, device.getAddress());
+            setResult(Activity.RESULT_OK, returnIntent);
+            finish();
         }
     };
 

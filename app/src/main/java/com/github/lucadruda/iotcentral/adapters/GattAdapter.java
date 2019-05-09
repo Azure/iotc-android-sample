@@ -23,31 +23,30 @@ import com.github.lucadruda.iotcentral.targets.Targets;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class GattAdapter extends BaseExpandableListAdapter {
 
-    private List<BluetoothGattService> services;
+    private LinkedHashMap<String, List<String>> services;
     private List<Measure> measures;
     private Activity context;
     private final String unknownServiceString;
     private final String unknownCharaString;
-    private final String deviceName;
     private final MappingStorage storage;
     private HashMap<String, MeasureAdapter> mappings;
 
 
-    public GattAdapter(Activity context, String deviceName, List<BluetoothGattService> services, List<Measure> measures) {
+    public GattAdapter(Activity context, MappingStorage storage, HashMap<String, List<String>> services, List<Measure> measures) {
         this.context = context;
-        this.services = services;
+        this.services = new LinkedHashMap<>(services);
         this.mappings = new HashMap<>();
         this.measures = measures;
-        this.deviceName = deviceName;
-        this.storage = new MappingStorage(context.getApplicationContext(), deviceName);
+        this.storage = storage;
         this.measures.add(0, new Measure(MeasureAdapter.DEFAULT_TEXT_KEY, context.getResources().getString(R.string.select_telemetry), Measure.MeasureType.EVENT));
-        for (BluetoothGattService service : this.services) {
-            for (BluetoothGattCharacteristic chars : service.getCharacteristics()) {
-                this.mappings.put(chars.getUuid().toString(), new MeasureAdapter(context, android.R.id.text1, new ArrayList<Measure>(measures), new GattPair(chars).getKey()));
+        for (String serviceUUID : this.services.keySet()) {
+            for (String charUUID : this.services.get(serviceUUID)) {
+                this.mappings.put(charUUID, new MeasureAdapter(context, android.R.id.text1, new ArrayList<Measure>(measures), new GattPair(serviceUUID, charUUID).getKey()));
             }
         }
         this.unknownServiceString = context.getResources().getString(R.string.unknown_service);
@@ -58,10 +57,11 @@ public class GattAdapter extends BaseExpandableListAdapter {
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
         LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = mInflater.inflate(R.layout.gatt_service_item, null);
+        String serviceUUID = (String) services.keySet().toArray()[groupPosition];
         TextView name = (TextView) convertView.findViewById(R.id.gatt_service_name);
-        name.setText(Targets.servicelookup(services.get(groupPosition).getUuid().toString()).getName());
+        name.setText(Targets.servicelookup(serviceUUID).getName());
         TextView uuid = (TextView) convertView.findViewById(R.id.gatt_service_UUID);
-        uuid.setText(services.get(groupPosition).getUuid().toString());
+        uuid.setText(serviceUUID);
       /*  if(isExpanded){
             for (BluetoothGattCharacteristic characteristic : services.get(groupPosition).getCharacteristics()){
 
@@ -77,23 +77,25 @@ public class GattAdapter extends BaseExpandableListAdapter {
             LayoutInflater layoutInflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = layoutInflater.inflate(R.layout.gatt_char_item, null);
         }
-        BluetoothGattCharacteristic characteristic = services.get(groupPosition).getCharacteristics().get(childPosition);
+        String serviceUUID = (String) services.keySet().toArray()[groupPosition];
+        String characteristicUUID = services.get(serviceUUID).get(childPosition);
         // Save final reference to be able to access it in inner classes
         final View finalConvertView = convertView;
 
         // Set the item name
         TextView featureName = (TextView) convertView.findViewById(R.id.featureName);
-        String name = Targets.featureslookup(characteristic.getUuid().toString()).getName();
+        String name = Targets.featureslookup(characteristicUUID).getName();
         featureName.setText(name);
 
         TextView uuid = (TextView) convertView.findViewById(R.id.featureUUID);
-        uuid.setText(characteristic.getUuid().toString());
+        uuid.setText(characteristicUUID);
 
         Spinner measureSpinner = (Spinner) convertView.findViewById(R.id.telemetrySpinner);
-        MeasureAdapter adapter = mappings.get(characteristic.getUuid().toString());
+        MeasureAdapter adapter = mappings.get(characteristicUUID);
         measureSpinner.setAdapter(adapter);
         measureSpinner.setOnItemSelectedListener(adapter.getOnItemSelectedListener());
-        String iotcTelemetry = storage.getIoTCTelemetry(new GattPair(characteristic).getKey());
+        // already has a mapping for this char
+        String iotcTelemetry = storage.getIoTCTelemetry(new GattPair(serviceUUID, characteristicUUID).getKey());
         if (iotcTelemetry != null) {
             measureSpinner.setSelection(adapter.getPosition(iotcTelemetry), true);
         }
@@ -113,17 +115,17 @@ public class GattAdapter extends BaseExpandableListAdapter {
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return services.get(groupPosition).getCharacteristics().size();
+        return services.get((String) getGroup(groupPosition)).size();
     }
 
     @Override
     public Object getGroup(int groupPosition) {
-        return services.get(groupPosition);
+        return services.keySet().toArray()[groupPosition];
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-        return services.get(groupPosition).getCharacteristics().get(childPosition);
+        return services.get(getGroup(groupPosition)).get(childPosition);
     }
 
     @Override
