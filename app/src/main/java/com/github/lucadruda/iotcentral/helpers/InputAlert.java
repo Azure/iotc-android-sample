@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.text.InputType;
 import android.widget.EditText;
 
+import com.github.lucadruda.iotcentral.Constants;
 import com.github.lucadruda.iotcentral.R;
 
 public class InputAlert {
@@ -28,6 +29,7 @@ public class InputAlert {
 
     public InputAlert(Context context, DialogInterface.OnClickListener onOK, DialogInterface.OnClickListener onCancel) {
         input = new EditText(context);
+        input.setId(Constants.INPUTDIALOG_ID);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder = new AlertDialog.Builder(context);
         builder.setView(input);
