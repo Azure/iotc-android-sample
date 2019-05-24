@@ -51,5 +51,5 @@ public class Constants {
     public static final String IOTCENTRAL_COMMAND_RECEIVED = "IOTCENTRAL_COMMAND_RECEIVED";
     public static final String IOTCENTRAL_COMMAND_TEXT = "IOTCENTRAL_COMMAND_TEXT";
 
-    public static final int INPUTDIALOG_ID = -1100001;
+    public static final int INPUTDIALOG_ID = 5678;
 }

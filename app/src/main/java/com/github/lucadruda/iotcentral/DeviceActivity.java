@@ -105,10 +105,20 @@ public class DeviceActivity extends BaseActivity {
             @Override
             public void run() {
                 try {
-                    loadingAlert.start("Creating device \"" + deviceName + "\"");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingAlert.start("Creating device \"" + deviceName + "\"");
+                        }
+                    });
                     device = dataClient.createDevice(application.getId(), deviceName, templateId);
-                    loadingAlert.stop();
-                    startServiceActivity();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            loadingAlert.stop();
+                            startServiceActivity();
+                        }
+                    });
                 } catch (DataException e) {
                     e.printStackTrace();
                 }
