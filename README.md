@@ -7,6 +7,9 @@ This Android application will help you connect your BLE(Bluetooth-Low-Energy) de
 * BLE discovery
 * BLE Characteristic to IoTCentral telemetry mapping
 
+## Binaries
+APKs for installing on Android are available in the [Release page](https://github.com/Azure/iotc-android-sample/releases)
+
 
 Application list</br>
 <img title="Application list" src="https://github.com/Azure/iotc-android-sample/raw/master/images/Screenshot_20190411-135544.png" height="350"/></br>
